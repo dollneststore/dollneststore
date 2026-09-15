@@ -22,13 +22,19 @@ export function generateMetadata() {
 }
 
 export default async function HomePage() {
-  const [featured, categories, reviews, settings, products] = await Promise.all([
+  const [featured, categories, latestReviews, settings, products] = await Promise.all([
     getFeaturedProducts(4),
     getCategories(),
-    getReviews(3),
+    getReviews(24),
     getSiteSettings(),
     getShopProducts(),
   ]);
+
+  // Show reviews with a customer photo first, then the newest written ones.
+  const reviews = [...latestReviews]
+    .filter((r) => r.rating >= 4 && r.body.trim().length > 20)
+    .sort((a, b) => Number(Boolean(b.imageUrl)) - Number(Boolean(a.imageUrl)))
+    .slice(0, 3);
 
   const fromPrices: Record<string, number> = {};
   for (const p of products) {

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddToBasketButton } from "@/components/cart/add-to-basket-button";
@@ -209,6 +210,11 @@ export async function ProductDetail({ slug }: { slug: string }) {
             {stats.reviews.slice(0, 6).map((r) => (
               <li key={r.id} className="flex flex-col gap-3 rounded-[20px] border border-line bg-white p-[22px]">
                 <Stars rating={r.rating} />
+                {r.imageUrl ? (
+                  <div className="relative aspect-square overflow-hidden rounded-2xl bg-blush">
+                    <Image src={r.imageUrl} alt={`Photo of their Dollnest baby shared by ${r.authorName}`} fill sizes="(min-width: 768px) 30vw, 100vw" className="object-cover" />
+                  </div>
+                ) : null}
                 <p className="font-serif text-[19px] leading-snug">“{r.body}”</p>
                 <p className="mt-auto text-xs text-muted">
                   <b className="text-cocoa">{r.authorName}</b>
