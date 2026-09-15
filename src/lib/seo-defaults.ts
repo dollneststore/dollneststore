@@ -7,6 +7,9 @@ import type { Category, Guide, Product } from "@/lib/types";
 export const SEO_TITLE_LIMIT = 60;
 export const SEO_DESCRIPTION_LIMIT = 155;
 
+export const ACCESSORIES_SLUG = "accessories";
+export const isAccessoryProduct = (p: Pick<Product, "categorySlug">) => p.categorySlug === ACCESSORIES_SLUG;
+
 export const shopPath = "/reborn-dolls";
 export const productPath = (slug: string) => `${shopPath}/${slug}`;
 export const categoryPath = (slug: string) => `${shopPath}/${slug}`;
@@ -20,13 +23,19 @@ export function truncate(text: string, max: number) {
   return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[\s,.;:–-]+$/, "")}…`;
 }
 
-export function defaultProductTitle(title: string) {
-  return `${title} – Reborn Doll UK | Dollnest`;
+export function defaultProductTitle(title: string, accessory = false) {
+  return accessory ? `${title} | Dollnest` : `${title} – Reborn Doll UK | Dollnest`;
 }
 
 export function defaultProductDescription(
   p: Pick<Product, "title" | "lengthIn" | "weightLbs" | "categorySlug" | "pricePence">,
 ) {
+  if (isAccessoryProduct(p)) {
+    return truncate(
+      `${p.title} from Dollnest, a small reborn doll shop in Bristol. ${formatPrice(p.pricePence)} with free tracked UK delivery.`,
+      SEO_DESCRIPTION_LIMIT,
+    );
+  }
   const meta = productMeta(p);
   return truncate(
     `${p.title}${meta ? ` (${meta})` : ""}: a lifelike reborn baby doll dressed in a new outfit. ${formatPrice(p.pricePence)} with free tracked UK delivery.`,
@@ -36,7 +45,7 @@ export function defaultProductDescription(
 
 export function productSeo(p: Product) {
   return {
-    title: p.seoTitle || defaultProductTitle(p.title),
+    title: p.seoTitle || defaultProductTitle(p.title, isAccessoryProduct(p)),
     description: p.seoDescription || defaultProductDescription(p),
   };
 }

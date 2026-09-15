@@ -1,5 +1,6 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
+import { isAccessoryProduct } from "@/lib/seo-defaults";
 import { defaultAnnouncement, defaultSocials } from "@/lib/site";
 import { createPublicClient } from "@/lib/supabase/public";
 import type { Category, Guide, PageSeo, Product, ProductReviewStats, Review, SiteSettings, Socials } from "@/lib/types";
@@ -46,7 +47,8 @@ export const isForSale = (p: Product) => p.status === "active" && p.stockQty > 0
 
 export async function getFeaturedProducts(limit = 4): Promise<Product[]> {
   const products = await getShopProducts();
-  const available = products.filter(isForSale);
+  // The home page features babies, never accessories.
+  const available = products.filter((p) => isForSale(p) && !isAccessoryProduct(p));
   const featured = available.filter((p) => p.isFeatured);
   const rest = available.filter((p) => !p.isFeatured);
   return [...featured, ...rest].slice(0, limit);

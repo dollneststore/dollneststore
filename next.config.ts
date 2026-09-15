@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { legacyProductRedirects } from "./src/lib/legacy-redirects";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseHost = supabaseUrl ? new URL(supabaseUrl).host : null;
@@ -46,7 +47,8 @@ const nextConfig: NextConfig = {
         : []),
     ],
   },
-  // Old /shop URLs → keyword-rich /reborn-dolls URLs (permanent, keeps any SEO value).
+  // Old /shop URLs → keyword-rich /reborn-dolls URLs, and the first import's
+  // product URLs → the named ones (permanent, keeps any SEO value).
   async redirects() {
     return [
       {
@@ -57,6 +59,11 @@ const nextConfig: NextConfig = {
       },
       { source: "/shop", destination: "/reborn-dolls", permanent: true },
       { source: "/shop/:slug", destination: "/reborn-dolls/:slug", permanent: true },
+      ...legacyProductRedirects.map(({ from, to }) => ({
+        source: `/reborn-dolls/${from}`,
+        destination: `/reborn-dolls/${to}`,
+        permanent: true,
+      })),
     ];
   },
   async headers() {

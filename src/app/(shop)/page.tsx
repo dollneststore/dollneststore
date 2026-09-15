@@ -30,10 +30,10 @@ export default async function HomePage() {
     getShopProducts(),
   ]);
 
-  // Show reviews with a customer photo first, then the newest written ones.
+  // Best-rated first, then the ones with a customer photo, then the newest.
   const reviews = [...latestReviews]
     .filter((r) => r.rating >= 4 && r.body.trim().length > 20)
-    .sort((a, b) => Number(Boolean(b.imageUrl)) - Number(Boolean(a.imageUrl)))
+    .sort((a, b) => b.rating - a.rating || Number(Boolean(b.imageUrl)) - Number(Boolean(a.imageUrl)))
     .slice(0, 3);
 
   const fromPrices: Record<string, number> = {};

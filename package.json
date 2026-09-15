@@ -12,7 +12,8 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "db:seed": "tsx scripts/seed.ts",
-    "import:etsy": "tsx scripts/import-etsy.ts"
+    "import:etsy": "tsx scripts/import-etsy.ts",
+    "copy:images": "tsx scripts/copy-images.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -43,6 +43,15 @@ Cloth-body dolls make gentle companions for ages 3+ and are not suitable for chi
 - An outfit, magnetic dummy and bottle
 - Free tracked UK delivery, dispatched within 48 hours`,
   },
+  accessories: {
+    heading: "Reborn doll accessories",
+    title: "Reborn Doll Care & Accessories UK | Dollnest",
+    description:
+      "Little extras for your reborn baby: care powder and accessories, posted free with tracking from our small Bristol shop.",
+    intro: `Everything here is chosen to keep your reborn baby looking and feeling her best.
+
+Not sure what your baby needs? [Message us](/contact) and we'll help.`,
+  },
   mini: {
     heading: "Mini reborn dolls",
     title: "Mini Reborn Dolls UK – Small 12 Inch Babies | Dollnest",
