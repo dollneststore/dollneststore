@@ -1,8 +1,8 @@
 -- Hardening: rate limiting, transactional orders & stock, stricter storage, newsletter re-subscribe.
--- Run after 20260916090000_seo_and_guides.sql
+-- Run after 20260916090000_seo_and_guides.sql. Safe to run more than once.
 
 -- ─── Rate limiting (used by the server with the secret key only) ────────────
-create table public.rate_limits (
+create table if not exists public.rate_limits (
   key text primary key,
   window_start timestamptz not null default now(),
   hits int not null default 0
@@ -195,5 +195,6 @@ create unique index if not exists product_images_product_storage_path_key
 
 -- ─── Newsletter: admins can mark people as unsubscribed ─────────────────────
 grant update on public.newsletter_subscribers to authenticated;
+drop policy if exists "Admins update newsletter subscribers" on public.newsletter_subscribers;
 create policy "Admins update newsletter subscribers" on public.newsletter_subscribers
   for update to authenticated using ((select public.is_admin())) with check ((select public.is_admin()));
