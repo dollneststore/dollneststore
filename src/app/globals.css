@@ -1,26 +1,93 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-cream: #fdf6f8;
+  --color-cocoa: #5b3f2e;
+  --color-muted: #7d6a70;
+  --color-line: #f1e2ec;
+  --color-line-soft: #f7edf2;
+  --color-lilac: #8f6bb1;
+  --color-lilac-soft: #e9ddf3;
+  --color-lilac-line: #dcc6ea;
+  --color-blush: #fbe4ea;
+  --color-rose: #c96d84;
+  --color-rose-soft: #f6c9d2;
+  --color-pink: #e9b5c3;
+  --color-dusty: #d48aa0;
+  --color-sage: #e3efe6;
+  --color-sage-deep: #4f7a4a;
+  --color-peach: #fbe9d3;
+  --color-peach-deep: #b07a3a;
+  --color-sky: #dbe9f5;
+  --color-sky-deep: #4a6d8f;
+  --color-star: #e8a33d;
+  --color-whatsapp: #25d366;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-cormorant), Georgia, "Times New Roman", serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-cream font-sans text-cocoa antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-lilac);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-lilac-soft);
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.bg-nest {
+  background:
+    radial-gradient(900px 500px at 100% 0%, #eee3f6 0%, rgb(238 227 246 / 0) 60%),
+    radial-gradient(800px 500px at 0% 20%, #fbe4ea 0%, rgb(251 228 234 / 0) 60%),
+    var(--color-cream);
+}
+
+.legal-prose h2 {
+  @apply mt-10 font-serif text-[28px] font-medium leading-tight;
+}
+.legal-prose h3 {
+  @apply mt-6 text-base font-bold;
+}
+.legal-prose p,
+.legal-prose ul {
+  @apply mt-3 leading-relaxed text-[#6b5a60];
+}
+.legal-prose ul {
+  @apply list-disc pl-5;
+}
+.legal-prose li + li {
+  @apply mt-1.5;
+}
+.legal-prose a {
+  @apply font-semibold text-lilac underline underline-offset-2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
