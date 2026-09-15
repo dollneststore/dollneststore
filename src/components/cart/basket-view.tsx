@@ -19,7 +19,7 @@ export function BasketView() {
       <div className={`${card} px-6 py-16 text-center`}>
         <p className="font-serif text-3xl">Your basket is empty ♡</p>
         <p className="mt-2 text-muted">Every baby is waiting for a loving home.</p>
-        <Link href="/shop" className={`${buttonPrimary} mt-6`}>
+        <Link href="/reborn-dolls" className={`${buttonPrimary} mt-6`}>
           Shop babies
         </Link>
       </div>
@@ -31,12 +31,12 @@ export function BasketView() {
       <ul className="flex flex-col gap-3">
         {items.map((item) => (
           <li key={item.productId} className={`${card} flex gap-4 p-3`}>
-            <Link href={`/shop/${item.slug}`} className="relative size-24 flex-none overflow-hidden rounded-2xl bg-blush sm:size-28">
+            <Link href={`/reborn-dolls/${item.slug}`} className="relative size-24 flex-none overflow-hidden rounded-2xl bg-blush sm:size-28">
               {item.image ? <Image src={item.image} alt="" fill sizes="112px" className="object-cover" /> : null}
             </Link>
             <div className="flex flex-1 flex-col justify-between gap-2">
               <div className="flex justify-between gap-3">
-                <Link href={`/shop/${item.slug}`} className="font-bold leading-snug hover:text-lilac">
+                <Link href={`/reborn-dolls/${item.slug}`} className="font-bold leading-snug hover:text-lilac">
                   {item.title}
                 </Link>
                 <span className="font-bold whitespace-nowrap text-lilac">{formatPrice(item.pricePence * item.qty)}</span>

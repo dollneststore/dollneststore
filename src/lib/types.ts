@@ -4,6 +4,7 @@ export const tints = ["rose", "lilac", "peach", "sage", "sky"] as const;
 export const reviewSources = ["website", "etsy", "vinted", "ebay", "tiktok"] as const;
 export const orderStatuses = ["pending", "paid", "processing", "dispatched", "delivered", "cancelled", "refunded"] as const;
 export const orderChannels = ["website", "whatsapp", "etsy", "vinted", "ebay", "tiktok", "other"] as const;
+export const postStatuses = ["draft", "published"] as const;
 
 export type ProductStatus = (typeof productStatuses)[number];
 export type Gender = (typeof genders)[number];
@@ -11,6 +12,7 @@ export type Tint = (typeof tints)[number];
 export type ReviewSource = (typeof reviewSources)[number];
 export type OrderStatus = (typeof orderStatuses)[number];
 export type OrderChannel = (typeof orderChannels)[number];
+export type PostStatus = (typeof postStatuses)[number];
 
 export type ProductImage = {
   id?: string;
@@ -36,6 +38,9 @@ export type Product = {
   badge: string | null;
   sortOrder: number;
   etsyListingId: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  updatedAt: string | null;
   images: ProductImage[];
 };
 
@@ -46,6 +51,9 @@ export type Category = {
   imageUrl: string | null;
   tint: Tint;
   sortOrder: number;
+  intro: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
 };
 
 export type Review = {
@@ -59,6 +67,33 @@ export type Review = {
   isPublished?: boolean;
 };
 
+export type ProductReviewStats = {
+  count: number;
+  average: number;
+  reviews: Review[];
+};
+
+export type Guide = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  body: string;
+  coverImageUrl: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  status: PostStatus;
+  publishedAt: string | null;
+  updatedAt: string | null;
+};
+
+export type PageSeo = {
+  path: string;
+  title: string | null;
+  description: string | null;
+  ogImageUrl: string | null;
+};
+
 export type Socials = {
   tiktok: string;
   instagram: string;
@@ -70,6 +105,7 @@ export type Socials = {
 export type SiteSettings = {
   announcement: string;
   socials: Socials;
+  googleSiteVerification: string | null;
 };
 
 export type CartProduct = {

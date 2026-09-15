@@ -1,11 +1,19 @@
 import { z } from "zod";
 import { poundsToPence } from "@/lib/format";
-import { genders, orderChannels, orderStatuses, productStatuses, reviewSources } from "@/lib/types";
+import { genders, orderChannels, orderStatuses, postStatuses, productStatuses, reviewSources, tints } from "@/lib/types";
 
 export const UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i;
+export const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 const text = (max: number) => z.string().trim().max(max, `Keep it under ${max} characters`);
 const optionalText = (max: number) => text(max).transform((v) => v || null);
+
+const slug = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .max(160)
+  .regex(SLUG_PATTERN, "Use lowercase letters, numbers and single dashes");
 
 const money = z
   .string()
@@ -30,14 +38,28 @@ const optionalHttpsUrl = z
   .union([z.literal(""), z.url({ protocol: /^https$/, error: "Use a full https:// link" })])
   .transform((v) => v || null);
 
+function allowedImageHosts() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return ["i.etsystatic.com", ...(supabaseUrl ? [new URL(supabaseUrl).hostname] : [])];
+}
+
+const optionalImageUrl = z
+  .union([
+    z.literal(""),
+    z
+      .url({ protocol: /^https$/, error: "Use a full https:// link" })
+      .refine((v) => allowedImageHosts().includes(new URL(v).hostname), "Use a photo URL from your product images (Supabase or Etsy)"),
+  ])
+  .transform((v) => v || null);
+
+const seoFields = {
+  seoTitle: optionalText(70),
+  seoDescription: optionalText(170),
+};
+
 export const productSchema = z.object({
   title: text(140).min(2, "Title is required"),
-  slug: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .max(160)
-    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Use lowercase letters, numbers and single dashes"),
+  slug,
   description: text(10000),
   price: money,
   compareAt: optionalMoney,
@@ -55,7 +77,44 @@ export const productSchema = z.object({
     .trim()
     .regex(/^\d*$/, "Digits only")
     .transform((v) => v || null),
+  ...seoFields,
 });
+
+export const categorySchema = z.object({
+  slug: slug.max(60),
+  name: text(60).min(2, "Name is required"),
+  description: optionalText(120),
+  intro: optionalText(5000),
+  imageUrl: optionalImageUrl,
+  tint: z.enum(tints),
+  sortOrder: z.coerce.number().int().min(-9999).max(9999),
+  ...seoFields,
+});
+
+export const guideSchema = z.object({
+  title: text(140).min(3, "Title is required"),
+  slug,
+  excerpt: optionalText(300),
+  body: text(50000),
+  status: z.enum(postStatuses),
+  publishedAt: z
+    .string()
+    .trim()
+    .regex(/^(\d{4}-\d{2}-\d{2})?$/, "Use a valid date")
+    .transform((v) => v || null),
+  ...seoFields,
+});
+
+/** Accepts either the bare code or the whole <meta name="google-site-verification" …> tag. */
+export const verificationSchema = z
+  .string()
+  .trim()
+  .max(300)
+  .transform((v) => {
+    const fromTag = v.match(/content=["']([^"']+)["']/);
+    return (fromTag ? fromTag[1] : v).trim() || null;
+  })
+  .refine((v) => v === null || /^[A-Za-z0-9_-]{10,100}$/.test(v), "Paste the HTML tag or code from Google Search Console");
 
 export const orderUpdateSchema = z.object({
   status: z.enum(orderStatuses),

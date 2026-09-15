@@ -8,7 +8,7 @@ export default function NotFound() {
         <p className="font-serif text-7xl text-lilac">404</p>
         <h1 className="mt-2 font-serif text-4xl">This little one has wandered off</h1>
         <p className="mt-3 text-muted">The page you&apos;re looking for doesn&apos;t exist or has been rehomed.</p>
-        <Link href="/shop" className={`${buttonPrimary} mt-7`}>
+        <Link href="/reborn-dolls" className={`${buttonPrimary} mt-7`}>
           Meet our babies ♡
         </Link>
       </div>

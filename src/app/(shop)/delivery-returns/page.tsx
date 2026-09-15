@@ -1,13 +1,11 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage } from "@/components/site/legal-page";
+import { staticPageMetadata } from "@/lib/seo";
 import { site, whatsappUrl } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Delivery & returns",
-  description: "Free tracked UK delivery, dispatch within 48 hours and 14-day returns on every Dollnest baby.",
-  alternates: { canonical: "/delivery-returns" },
-};
+export function generateMetadata() {
+  return staticPageMetadata("/delivery-returns");
+}
 
 export default function DeliveryReturnsPage() {
   return (

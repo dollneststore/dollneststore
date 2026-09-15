@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { saveProduct } from "@/lib/admin/actions/products";
 import { penceToPounds, slugify } from "@/lib/format";
+import { defaultProductDescription, defaultProductTitle, productPath } from "@/lib/seo-defaults";
 import { genders, productStatuses, type Category, type Product } from "@/lib/types";
 import { adminButton, AdminCard, Field, FormMessage, inputClass } from "./form-ui";
 import { ImageUploader } from "./image-uploader";
+import { SeoFields } from "./seo-fields";
 import { useFormAction } from "./use-form-action";
 
 const statusLabels: Record<(typeof productStatuses)[number], string> = {
@@ -17,9 +19,11 @@ const statusLabels: Record<(typeof productStatuses)[number], string> = {
 
 export function ProductForm({ product, categories }: { product?: Product; categories: Category[] }) {
   const { state, pending, onSubmit } = useFormAction(saveProduct);
+  const [title, setTitle] = useState(product?.title ?? "");
   const [slug, setSlug] = useState(product?.slug ?? "");
   const [slugEdited, setSlugEdited] = useState(Boolean(product));
   const errors = state?.fieldErrors ?? {};
+  const previewName = title || "Product name";
 
   return (
     <form onSubmit={onSubmit} className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
@@ -33,14 +37,20 @@ export function ProductForm({ product, categories }: { product?: Product; catego
               name="title"
               required
               maxLength={140}
-              defaultValue={product?.title}
+              value={title}
               onChange={(e) => {
+                setTitle(e.target.value);
                 if (!slugEdited) setSlug(slugify(e.target.value));
               }}
               className={inputClass}
             />
           </Field>
-          <Field label="URL" htmlFor="slug" error={errors.slug} hint={`dollneststore.co.uk/shop/${slug || "…"}`}>
+          <Field
+            label="URL"
+            htmlFor="slug"
+            error={errors.slug}
+            hint={`dollneststore.co.uk${productPath(slug || "…")} · use keywords, e.g. silicone-reborn-baby-girl-18-inch`}
+          >
             <input
               id="slug"
               name="slug"
@@ -95,6 +105,23 @@ export function ProductForm({ product, categories }: { product?: Product; catego
               <input id="weightLbs" name="weightLbs" inputMode="decimal" defaultValue={product?.weightLbs ?? ""} className={inputClass} />
             </Field>
           </div>
+        </AdminCard>
+
+        <AdminCard title="Search engine (SEO)">
+          <SeoFields
+            path={productPath(slug || "…")}
+            defaultTitle={defaultProductTitle(previewName)}
+            defaultDescription={defaultProductDescription({
+              title: previewName,
+              lengthIn: product?.lengthIn ?? null,
+              weightLbs: product?.weightLbs ?? null,
+              categorySlug: product?.categorySlug ?? null,
+              pricePence: product?.pricePence ?? 0,
+            })}
+            title={product?.seoTitle}
+            description={product?.seoDescription}
+            errors={errors}
+          />
         </AdminCard>
       </div>
 

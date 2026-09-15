@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const items = [
   { href: "/", glyph: "♡", label: "Home" },
-  { href: "/shop", glyph: "✿", label: "Shop" },
+  { href: "/reborn-dolls", glyph: "✿", label: "Shop" },
   { href: "/#reviews", glyph: "★", label: "Reviews" },
   { href: "/contact", glyph: "❦", label: "Contact" },
 ];

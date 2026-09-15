@@ -1,14 +1,12 @@
-import type { Metadata } from "next";
 import { WhatsAppIcon } from "@/components/icons";
 import { buttonPrimary, card, container, eyebrow } from "@/components/ui/styles";
 import { getSiteSettings } from "@/lib/data/catalog";
+import { staticPageMetadata } from "@/lib/seo";
 import { site, whatsappUrl } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Contact us",
-  description: "Message Dollnest on WhatsApp, email or social media. We reply within a day.",
-  alternates: { canonical: "/contact" },
-};
+export function generateMetadata() {
+  return staticPageMetadata("/contact");
+}
 
 export default async function ContactPage() {
   const { socials } = await getSiteSettings();

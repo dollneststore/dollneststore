@@ -37,7 +37,7 @@ async function EditProduct({ params, searchParams }: PageProps<"/admin/products/
         </div>
         <div className="flex gap-2">
           {product.status === "active" || product.status === "sold_out" ? (
-            <Link href={`/shop/${product.slug}`} target="_blank" className={adminButtonSecondary}>
+            <Link href={`/reborn-dolls/${product.slug}`} target="_blank" className={adminButtonSecondary}>
               View on shop ↗
             </Link>
           ) : null}

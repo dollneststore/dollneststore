@@ -19,7 +19,7 @@ export function CheckoutView({ etsyUrl }: { etsyUrl: string }) {
     return (
       <div className={`${card} px-6 py-16 text-center`}>
         <p className="font-serif text-3xl">Nothing to check out yet ♡</p>
-        <Link href="/shop" className={`${buttonPrimary} mt-6`}>
+        <Link href="/reborn-dolls" className={`${buttonPrimary} mt-6`}>
           Shop babies
         </Link>
       </div>

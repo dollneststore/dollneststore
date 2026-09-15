@@ -11,10 +11,10 @@ import { site } from "@/lib/site";
 
 const navLinks = [
   { href: "/", label: "♡ Home" },
-  { href: "/shop", label: "Babies" },
+  { href: "/reborn-dolls", label: "Reborn dolls" },
   { href: "/#collections", label: "Collections" },
   { href: "/#reviews", label: "Reviews" },
-  { href: "/#faq", label: "FAQ" },
+  { href: "/guides", label: "Guides" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -63,7 +63,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-1.5">
-          <Link href="/shop" aria-label="Search babies" className={iconButton}>
+          <Link href="/reborn-dolls" aria-label="Search reborn dolls" className={iconButton}>
             <SearchIcon />
           </Link>
           <Link href="/basket" aria-label={`Basket, ${count} ${count === 1 ? "item" : "items"}`} className={iconButton}>

@@ -60,7 +60,7 @@ async function ProductsTable() {
                   </span>
                   <span>
                     {p.title}
-                    <span className="block text-xs font-normal text-muted">/shop/{p.slug}</span>
+                    <span className="block text-xs font-normal text-muted">/reborn-dolls/{p.slug}</span>
                   </span>
                 </Link>
               </td>

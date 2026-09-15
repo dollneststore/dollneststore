@@ -46,6 +46,19 @@ const nextConfig: NextConfig = {
         : []),
     ],
   },
+  // Old /shop URLs → keyword-rich /reborn-dolls URLs (permanent, keeps any SEO value).
+  async redirects() {
+    return [
+      {
+        source: "/shop",
+        has: [{ type: "query", key: "category", value: "(?<category>[a-z0-9-]+)" }],
+        destination: "/reborn-dolls/:category",
+        permanent: true,
+      },
+      { source: "/shop", destination: "/reborn-dolls", permanent: true },
+      { source: "/shop/:slug", destination: "/reborn-dolls/:slug", permanent: true },
+    ];
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

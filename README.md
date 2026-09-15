@@ -14,8 +14,9 @@
 ## 1. Supabase kurulumu (bir kez)
 
 1. [supabase.com](https://supabase.com) → projeyi açarken bölge olarak **London (eu-west-2)** seçin (UK GDPR ve hız için).
-2. **SQL Editor** → `supabase/migrations/20260915120000_initial_schema.sql` dosyasının tamamını yapıştırıp **Run**.
-   (Tablolar, RLS politikaları, `product-images` storage bucket'ı ve kategoriler oluşur.)
+2. **SQL Editor** → `supabase/migrations/` klasöründeki dosyaları **sırayla** yapıştırıp **Run**:
+   1. `20260915120000_initial_schema.sql` — tablolar, RLS, `product-images` bucket'ı, kategoriler
+   2. `20260916090000_seo_and_guides.sql` — SEO alanları, sayfa SEO tablosu, rehberler (2 taslak rehberle)
 3. **Authentication → Users → Add user**: `dollneststore@gmail.com` için şifreli kullanıcı oluşturun (“Auto confirm” açık).
 4. SQL Editor'de bu kullanıcıyı admin yapın:
    ```sql

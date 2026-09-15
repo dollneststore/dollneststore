@@ -5,14 +5,19 @@ import type { Category, Product, Review } from "@/lib/types";
 const IL = (h: string, id: string, s: string) =>
   `https://i.etsystatic.com/64552494/r/il/${h}/${id}/il_794xN.${id}_${s}.jpg`;
 
-export const seedCategories: Category[] = [
+export const seedCategories: Category[] = ([
   { slug: "silicone", name: "Silicone babies", description: "Floppy & squishy", imageUrl: IL("5d8709", "7901487361", "9phl"), tint: "rose", sortOrder: 1 },
   { slug: "cloth-body", name: "Cloth-body", description: "Soft body, vinyl limbs", imageUrl: IL("bbf807", "8510061144", "aebd"), tint: "lilac", sortOrder: 2 },
   { slug: "mini", name: "Mini reborns", description: "12 inch", imageUrl: IL("f39bcc", "8302450043", "opx8"), tint: "peach", sortOrder: 3 },
   { slug: "weighted", name: "Weighted", description: "Approx. 5 lbs", imageUrl: IL("e54c15", "8510092476", "bdqo"), tint: "sage", sortOrder: 4 },
-];
+] as Omit<Category, "intro" | "seoTitle" | "seoDescription">[]).map((c) => ({
+  ...c,
+  intro: null,
+  seoTitle: null,
+  seoDescription: null,
+}));
 
-export const seedProducts: Product[] = [
+export const seedProducts: Product[] = ([
   {
     id: "seed-4575049995",
     slug: "new-silicone-baby-girl-9995",
@@ -203,7 +208,12 @@ export const seedProducts: Product[] = [
     etsyListingId: "4563757754",
     images: [{ url: "https://i.etsystatic.com/64552494/r/il/b1256f/8487836675/il_794xN.8487836675_q55g.jpg", alt: "Cloth-body reborn baby" }],
   },
-];
+] as Omit<Product, "seoTitle" | "seoDescription" | "updatedAt">[]).map((p) => ({
+  ...p,
+  seoTitle: null,
+  seoDescription: null,
+  updatedAt: null,
+}));
 
 export const seedReviews: Review[] = [
   { id: "seed-r1", authorName: "Shaun", rating: 5, body: "If I could leave six stars I would. My daughter was over the moon — quality is amazing and service top notch.", source: "vinted", imageUrl: null, reviewedAt: null },

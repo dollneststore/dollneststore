@@ -21,7 +21,8 @@ UK online shop for reborn baby dolls, run by HOYD. Trading Ltd (Bristol). Storef
 
 ## Layout
 
-- `src/app/(shop)` — public storefront (home, /shop, /shop/[slug], basket, checkout, legal pages)
+- `src/app/(shop)` — public storefront (home, /reborn-dolls, /reborn-dolls/[slug] = collection or product, /guides, basket, checkout, legal pages)
+- `src/lib/seo.ts`, `src/lib/seo-defaults.ts`, `src/lib/content/` — metadata builders and default SEO copy (see `.claude/rules/seo.md`)
 - `src/app/admin` — admin panel; `admin/login` is public, `admin/(panel)` requires an admin
 - `src/lib/data/catalog.ts` — cached public reads (`"use cache"` + `cacheTag`)
 - `src/lib/admin/` — server-only admin queries and server actions (each re-checks `requireAdmin()`)

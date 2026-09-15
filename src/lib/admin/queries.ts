@@ -1,18 +1,37 @@
 import "server-only";
 import { z } from "zod";
 import {
+  CATEGORY_COLUMNS,
+  GUIDE_COLUMNS,
   mapCategory,
+  mapGuide,
+  mapPageSeo,
   mapProduct,
   mapReview,
   PRODUCT_COLUMNS,
+  REVIEW_COLUMNS,
   type CategoryRow,
+  type GuideRow,
+  type PageSeoRow,
   type ProductRow,
   type ReviewRow,
 } from "@/lib/data/mappers";
 import { defaultAnnouncement, defaultSocials } from "@/lib/site";
-import { orderStatuses, type Category, type OrderChannel, type OrderStatus, type Product, type Review, type SiteSettings, type Socials } from "@/lib/types";
+import {
+  orderStatuses,
+  type Category,
+  type Guide,
+  type OrderChannel,
+  type OrderStatus,
+  type PageSeo,
+  type Product,
+  type Review,
+  type SiteSettings,
+  type Socials,
+} from "@/lib/types";
 import { adminContext } from "./context";
 import type { AdminOrder, AdminOrderListItem, DashboardStats, ProductOption } from "./types";
+import { SLUG_PATTERN } from "./validation";
 
 const ORDER_LIST_COLUMNS = "id, order_number, status, channel, customer_name, total_pence, created_at";
 
@@ -61,12 +80,46 @@ export async function getAdminProduct(id: string): Promise<Product | null> {
 
 export async function getAdminCategories(): Promise<Category[]> {
   const { supabase } = await adminContext();
-  const { data, error } = await supabase
-    .from("categories")
-    .select("slug, name, description, image_url, tint, sort_order")
-    .order("sort_order");
+  const { data, error } = await supabase.from("categories").select(CATEGORY_COLUMNS).order("sort_order");
   if (error) throw new Error(error.message);
   return (data as CategoryRow[]).map(mapCategory);
+}
+
+export async function getAdminCategory(slug: string): Promise<Category | null> {
+  if (!SLUG_PATTERN.test(slug)) return null;
+  const { supabase } = await adminContext();
+  const { data, error } = await supabase.from("categories").select(CATEGORY_COLUMNS).eq("slug", slug).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? mapCategory(data as CategoryRow) : null;
+}
+
+export async function getAdminGuides(): Promise<Guide[]> {
+  const { supabase } = await adminContext();
+  const { data, error } = await supabase.from("posts").select(GUIDE_COLUMNS).order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data as GuideRow[]).map(mapGuide);
+}
+
+export async function getAdminGuide(id: string): Promise<Guide | null> {
+  if (!isUuid(id)) return null;
+  const { supabase } = await adminContext();
+  const { data, error } = await supabase.from("posts").select(GUIDE_COLUMNS).eq("id", id).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? mapGuide(data as GuideRow) : null;
+}
+
+export async function getAdminSeo(): Promise<{ pages: Record<string, PageSeo>; googleSiteVerification: string | null }> {
+  const { supabase } = await adminContext();
+  const [pages, settings] = await Promise.all([
+    supabase.from("page_seo").select("path, title, description, og_image_url"),
+    supabase.from("site_settings").select("google_site_verification").eq("id", 1).maybeSingle(),
+  ]);
+  if (pages.error) throw new Error(pages.error.message);
+  if (settings.error) throw new Error(settings.error.message);
+  return {
+    pages: Object.fromEntries((pages.data as PageSeoRow[]).map((row) => [row.path, mapPageSeo(row)])),
+    googleSiteVerification: settings.data?.google_site_verification ?? null,
+  };
 }
 
 export async function getProductOptions(): Promise<ProductOption[]> {
@@ -137,7 +190,7 @@ export async function getAdminReviews(): Promise<Review[]> {
   const { supabase } = await adminContext();
   const { data, error } = await supabase
     .from("reviews")
-    .select("id, author_name, rating, body, source, image_url, reviewed_at, is_published")
+    .select(REVIEW_COLUMNS)
     .order("created_at", { ascending: false })
     .limit(300);
   if (error) throw new Error(error.message);
@@ -146,12 +199,17 @@ export async function getAdminReviews(): Promise<Review[]> {
 
 export async function getAdminSettings(): Promise<SiteSettings> {
   const { supabase } = await adminContext();
-  const { data, error } = await supabase.from("site_settings").select("announcement, socials").eq("id", 1).maybeSingle();
+  const { data, error } = await supabase
+    .from("site_settings")
+    .select("announcement, socials, google_site_verification")
+    .eq("id", 1)
+    .maybeSingle();
   if (error) throw new Error(error.message);
   const saved = (data?.socials ?? {}) as Partial<Socials>;
   return {
     announcement: data?.announcement || defaultAnnouncement,
     socials: { ...defaultSocials, ...Object.fromEntries(Object.entries(saved).filter(([, v]) => Boolean(v))) },
+    googleSiteVerification: data?.google_site_verification ?? null,
   };
 }
 

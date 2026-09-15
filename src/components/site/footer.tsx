@@ -1,14 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { container } from "@/components/ui/styles";
-import { getCopyrightYear, getSiteSettings } from "@/lib/data/catalog";
+import { getCategories, getCopyrightYear, getSiteSettings } from "@/lib/data/catalog";
+import { categoryDefaults, categoryPath, shopPath } from "@/lib/seo-defaults";
 import { addressLine, companyLine, site, whatsappUrl } from "@/lib/site";
 import { NewsletterForm } from "./newsletter-form";
 
 const heading = "text-xs font-bold uppercase tracking-[.14em] text-lilac";
 
 export async function Footer() {
-  const [{ socials }, year] = await Promise.all([getSiteSettings(), getCopyrightYear()]);
+  const [{ socials }, categories, year] = await Promise.all([getSiteSettings(), getCategories(), getCopyrightYear()]);
   const socialLinks = [
     { href: socials.tiktok, label: "TikTok", short: "TT", bg: "bg-blush" },
     { href: socials.instagram, label: "Instagram", short: "IG", bg: "bg-lilac-soft" },
@@ -48,15 +49,17 @@ export async function Footer() {
 
           <nav aria-label="Shop" className="flex flex-col gap-2.5 text-sm">
             <p className={heading}>Shop</p>
-            <Link href="/shop" className="hover:text-lilac">All babies</Link>
-            <Link href="/shop?category=silicone" className="hover:text-lilac">Silicone babies</Link>
-            <Link href="/shop?category=cloth-body" className="hover:text-lilac">Cloth-body babies</Link>
-            <Link href="/shop?category=weighted" className="hover:text-lilac">Weighted babies</Link>
-            <Link href="/shop?category=mini" className="hover:text-lilac">Mini reborns</Link>
+            <Link href={shopPath} className="hover:text-lilac">All reborn dolls</Link>
+            {categories.map((c) => (
+              <Link key={c.slug} href={categoryPath(c.slug)} className="hover:text-lilac">
+                {categoryDefaults(c).heading}
+              </Link>
+            ))}
           </nav>
 
           <nav aria-label="Help" className="flex flex-col gap-2.5 text-sm">
             <p className={heading}>Help</p>
+            <Link href="/guides" className="hover:text-lilac">Guides & care tips</Link>
             <Link href="/delivery-returns" className="hover:text-lilac">Delivery & returns</Link>
             <Link href="/#faq" className="hover:text-lilac">FAQ</Link>
             <Link href="/contact" className="hover:text-lilac">Contact us</Link>

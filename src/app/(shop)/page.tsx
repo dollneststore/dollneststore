@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import {
   Collections,
   FaqSection,
@@ -14,11 +13,13 @@ import { container } from "@/components/ui/styles";
 import { faqs } from "@/lib/content/faq";
 import { getCategories, getFeaturedProducts, getReviews, getShopProducts, getSiteSettings } from "@/lib/data/catalog";
 import { heroImage, seedSocialImages } from "@/lib/data/seed";
+import { staticPageMetadata } from "@/lib/seo";
+import { shopPath } from "@/lib/seo-defaults";
 import { site } from "@/lib/site";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/" },
-};
+export function generateMetadata() {
+  return staticPageMetadata("/");
+}
 
 export default async function HomePage() {
   const [featured, categories, reviews, settings, products] = await Promise.all([
@@ -37,13 +38,14 @@ export default async function HomePage() {
 
   const organization = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": "OnlineStore",
     name: site.name,
     legalName: site.company.legalName,
     url: site.url,
     logo: `${site.url}${site.logo}`,
     email: site.email,
     telephone: `+${site.whatsapp.number}`,
+    identifier: { "@type": "PropertyValue", propertyID: "Companies House", value: site.company.number },
     address: {
       "@type": "PostalAddress",
       streetAddress: site.company.address.street,
@@ -51,7 +53,20 @@ export default async function HomePage() {
       postalCode: site.company.address.postcode,
       addressCountry: "GB",
     },
+    areaServed: "GB",
     sameAs: Object.values(settings.socials),
+  };
+
+  const website = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: site.name,
+    url: site.url,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${site.url}${shopPath}?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
   };
 
   const faqPage = {
@@ -67,6 +82,7 @@ export default async function HomePage() {
   return (
     <div className={container}>
       <JsonLd data={organization} />
+      <JsonLd data={website} />
       <JsonLd data={faqPage} />
       <Hero imageUrl={heroImage} />
       <FeaturedBabies products={featured} />

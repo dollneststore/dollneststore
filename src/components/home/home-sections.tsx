@@ -41,7 +41,7 @@ export function Hero({ imageUrl }: { imageUrl: string }) {
           Soft, weighted reborn babies that feel just like a newborn — dressed, wrapped with care and posted free across the UK.
         </p>
         <div className="mt-1 flex flex-wrap gap-3">
-          <Link href="/shop" className={buttonPrimary}>
+          <Link href="/reborn-dolls" className={buttonPrimary}>
             Shop babies ♡
           </Link>
           <Link href="/#collections" className="px-5 py-[15px] text-[15px] font-bold text-lilac hover:underline">
@@ -96,7 +96,7 @@ export function FeaturedBabies({ products }: { products: Product[] }) {
             Ready for a new home
           </h2>
         </div>
-        <Link href="/shop" className="text-sm font-bold text-lilac hover:underline">
+        <Link href="/reborn-dolls" className="text-sm font-bold text-lilac hover:underline">
           View all babies →
         </Link>
       </div>
@@ -149,7 +149,7 @@ export function Collections({ categories, fromPrices }: { categories: Category[]
       </div>
       <div className="grid grid-cols-2 gap-[18px] lg:grid-cols-4">
         {categories.map((c) => (
-          <Link key={c.slug} href={`/shop?category=${c.slug}`} className="group flex flex-col items-center gap-3 text-center">
+          <Link key={c.slug} href={`/reborn-dolls/${c.slug}`} className="group flex flex-col items-center gap-3 text-center">
             <div className={`w-full rounded-[50%_50%_18px_18px] p-2.5 ${tintBg[c.tint]}`}>
               <div className="relative aspect-[1/1.1] overflow-hidden rounded-[50%_50%_10px_10px]">
                 {c.imageUrl ? (

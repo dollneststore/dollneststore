@@ -8,7 +8,7 @@ import { toCartProduct, type Product } from "@/lib/types";
 export function ProductCard({ product }: { product: Product }) {
   const image = product.images[0];
   const soldOut = product.status === "sold_out" || product.stockQty < 1;
-  const href = `/shop/${product.slug}`;
+  const href = `/reborn-dolls/${product.slug}`;
 
   return (
     <article className="group flex flex-col gap-2.5 rounded-[22px] border border-line bg-white p-2.5 shadow-[0_6px_24px_rgba(143,107,177,.06)] transition-shadow hover:shadow-[0_14px_34px_rgba(143,107,177,.14)]">

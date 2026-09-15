@@ -81,7 +81,12 @@ export function FormMessage({ state }: { state: FormState }) {
   );
 }
 
-const statusTones: Record<OrderStatus, string> = {
+const statusTones: Record<OrderStatus, string> & Record<string, string> = {
+  active: "bg-sage text-sage-deep",
+  published: "bg-sage text-sage-deep",
+  draft: "bg-peach text-peach-deep",
+  sold_out: "bg-blush text-rose",
+  archived: "bg-line text-muted",
   pending: "bg-peach text-peach-deep",
   paid: "bg-sky text-sky-deep",
   processing: "bg-lilac-soft text-lilac",

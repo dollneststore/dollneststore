@@ -1,12 +1,11 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage } from "@/components/site/legal-page";
+import { staticPageMetadata } from "@/lib/seo";
 import { addressLine, site } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Terms & conditions",
-  alternates: { canonical: "/terms" },
-};
+export function generateMetadata() {
+  return staticPageMetadata("/terms");
+}
 
 export default function TermsPage() {
   return (

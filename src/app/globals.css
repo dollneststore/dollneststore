@@ -73,6 +73,15 @@
 .legal-prose ul {
   @apply list-disc pl-5;
 }
+.legal-prose ol {
+  @apply mt-3 list-decimal pl-5 leading-relaxed text-[#6b5a60];
+}
+.legal-prose blockquote {
+  @apply mt-5 border-l-4 border-lilac-line pl-4 font-serif text-xl text-cocoa italic;
+}
+.legal-prose > :first-child {
+  @apply mt-0;
+}
 .legal-prose li + li {
   @apply mt-1.5;
 }

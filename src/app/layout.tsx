@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
+import { pageSeoDefaults } from "@/lib/content/page-seo";
+import { getSiteSettings } from "@/lib/data/catalog";
 import { heroImage } from "@/lib/data/seed";
 import { site } from "@/lib/site";
 import "./globals.css";
@@ -18,25 +20,27 @@ const manrope = Manrope({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(site.url),
-  title: {
-    default: "Dollnest · Reborn baby dolls made with love in the UK",
-    template: "%s · Dollnest",
-  },
-  description: site.description,
-  applicationName: site.name,
-  keywords: ["reborn dolls UK", "silicone reborn baby", "reborn baby doll", "weighted reborn doll", "Dollnest"],
-  openGraph: {
-    type: "website",
-    locale: "en_GB",
-    siteName: site.name,
-    url: "/",
-    images: [{ url: heroImage, alt: "A sleeping Dollnest reborn baby" }],
-  },
-  twitter: { card: "summary_large_image" },
-  formatDetection: { telephone: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { googleSiteVerification } = await getSiteSettings();
+  const home = pageSeoDefaults["/"];
+
+  return {
+    metadataBase: new URL(site.url),
+    title: { default: home.title, template: "%s | Dollnest" },
+    description: home.description,
+    applicationName: site.name,
+    openGraph: {
+      type: "website",
+      locale: "en_GB",
+      siteName: site.name,
+      url: "/",
+      images: [{ url: heroImage, alt: "A sleeping Dollnest reborn baby" }],
+    },
+    twitter: { card: "summary_large_image" },
+    formatDetection: { telephone: false },
+    ...(googleSiteVerification ? { verification: { google: googleSiteVerification } } : {}),
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#fdf6f8",

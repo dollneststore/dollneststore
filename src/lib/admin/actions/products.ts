@@ -17,7 +17,7 @@ function dbError(error: { code?: string; message: string }): FormState {
   if (error.code === "23505") {
     return {
       ok: false,
-      message: "That slug or Etsy listing ID is already used by another product.",
+      message: "That URL or Etsy listing ID is already used by another product.",
       fieldErrors: { slug: ["Already in use"] },
     };
   }
@@ -46,12 +46,21 @@ export async function saveProduct(_prev: FormState, formData: FormData): Promise
     badge: field(formData, "badge"),
     sortOrder: field(formData, "sortOrder") || "0",
     etsyListingId: field(formData, "etsyListingId"),
+    seoTitle: field(formData, "seoTitle"),
+    seoDescription: field(formData, "seoDescription"),
   });
   if (!parsed.success) {
     return { ok: false, message: "Please check the highlighted fields.", fieldErrors: z.flattenError(parsed.error).fieldErrors };
   }
 
   const v = parsed.data;
+
+  // Products and collections share the /reborn-dolls/<slug> namespace.
+  const { data: clash } = await supabase.from("categories").select("slug").eq("slug", v.slug).maybeSingle();
+  if (clash) {
+    return { ok: false, message: "A collection already uses this URL.", fieldErrors: { slug: ["Already used by a collection"] } };
+  }
+
   const row = {
     title: v.title,
     slug: v.slug,
@@ -68,6 +77,8 @@ export async function saveProduct(_prev: FormState, formData: FormData): Promise
     badge: v.badge,
     sort_order: v.sortOrder,
     etsy_listing_id: v.etsyListingId,
+    seo_title: v.seoTitle,
+    seo_description: v.seoDescription,
   };
 
   let id: string;

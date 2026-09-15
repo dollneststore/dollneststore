@@ -1,53 +1,34 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { AddToBasketButton } from "@/components/cart/add-to-basket-button";
+import { Stars } from "@/components/home/home-sections";
 import { WhatsAppIcon } from "@/components/icons";
-import { ProductCard } from "@/components/product/product-card";
-import { ProductGallery } from "@/components/product/product-gallery";
+import { Breadcrumbs } from "@/components/site/breadcrumbs";
 import { JsonLd } from "@/components/site/json-ld";
 import { badgeTone, buttonOutline, container } from "@/components/ui/styles";
-import { getProductBySlug, getShopProducts } from "@/lib/data/catalog";
-import { formatPrice, parseDescription, productMeta } from "@/lib/format";
+import { getCategories, getProductBySlug, getProductReviewStats, getShopProducts } from "@/lib/data/catalog";
+import { formatDate, formatPrice, parseDescription, productMeta } from "@/lib/format";
+import { categoryDefaults, categoryPath, productPath, shopPath } from "@/lib/seo-defaults";
 import { site, whatsappUrl } from "@/lib/site";
 import { toCartProduct } from "@/lib/types";
+import { ProductCard } from "./product-card";
+import { ProductGallery } from "./product-gallery";
 
-export async function generateStaticParams() {
-  const products = await getShopProducts();
-  // Cache Components needs at least one param to validate the route at build time.
-  return products.length ? products.map((p) => ({ slug: p.slug })) : [{ slug: "coming-soon" }];
-}
-
-export async function generateMetadata({ params }: PageProps<"/shop/[slug]">): Promise<Metadata> {
-  const { slug } = await params;
-  const product = await getProductBySlug(slug);
-  if (!product) return { title: "Baby not found" };
-  const { lead } = parseDescription(product.description);
-  return {
-    title: product.title,
-    description: `${lead.slice(0, 140)} · ${formatPrice(product.pricePence)} with free tracked UK delivery.`,
-    alternates: { canonical: `/shop/${product.slug}` },
-    openGraph: { images: product.images.slice(0, 1).map((img) => ({ url: img.url, alt: img.alt ?? product.title })) },
-  };
-}
-
-export default function ProductPage({ params }: PageProps<"/shop/[slug]">) {
-  return (
-    <Suspense fallback={<ProductSkeleton />}>
-      <ProductDetail params={params} />
-    </Suspense>
-  );
-}
-
-async function ProductDetail({ params }: Pick<PageProps<"/shop/[slug]">, "params">) {
-  const { slug } = await params;
-  const [product, products] = await Promise.all([getProductBySlug(slug), getShopProducts()]);
+export async function ProductDetail({ slug }: { slug: string }) {
+  const [product, products, categories, reviewStats] = await Promise.all([
+    getProductBySlug(slug),
+    getShopProducts(),
+    getCategories(),
+    getProductReviewStats(),
+  ]);
   if (!product) notFound();
 
+  const category = categories.find((c) => c.slug === product.categorySlug);
+  const categoryHeading = category ? categoryDefaults(category).heading : null;
+  const stats = reviewStats[product.id];
   const soldOut = product.status === "sold_out" || product.stockQty < 1;
   const { lead, bullets } = parseDescription(product.description);
-  const productUrl = `${site.url}/shop/${product.slug}`;
+  const productUrl = `${site.url}${productPath(product.slug)}`;
   const related = products
     .filter((p) => p.id !== product.id && p.status === "active" && p.categorySlug === product.categorySlug)
     .slice(0, 4);
@@ -59,6 +40,13 @@ async function ProductDetail({ params }: Pick<PageProps<"/shop/[slug]">, "params
     { label: "Baby", value: product.gender === "unisex" ? null : product.gender === "girl" ? "Girl" : "Boy" },
   ].filter((s) => s.value);
 
+  const breadcrumbs = [
+    { name: "Home", path: "/" },
+    { name: "Reborn dolls", path: shopPath },
+    ...(category && categoryHeading ? [{ name: categoryHeading, path: categoryPath(category.slug) }] : []),
+    { name: product.title, path: productPath(product.slug) },
+  ];
+
   const productLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -67,6 +55,7 @@ async function ProductDetail({ params }: Pick<PageProps<"/shop/[slug]">, "params
     image: product.images.map((img) => img.url),
     sku: product.id,
     brand: { "@type": "Brand", name: site.name },
+    ...(categoryHeading ? { category: categoryHeading } : {}),
     offers: {
       "@type": "Offer",
       url: productUrl,
@@ -79,37 +68,67 @@ async function ProductDetail({ params }: Pick<PageProps<"/shop/[slug]">, "params
         "@type": "OfferShippingDetails",
         shippingRate: { "@type": "MonetaryAmount", value: "0", currency: "GBP" },
         shippingDestination: { "@type": "DefinedRegion", addressCountry: "GB" },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 2, unitCode: "DAY" },
+          transitTime: { "@type": "QuantitativeValue", minValue: 2, maxValue: 3, unitCode: "DAY" },
+        },
       },
       hasMerchantReturnPolicy: {
         "@type": "MerchantReturnPolicy",
         applicableCountry: "GB",
         returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
         merchantReturnDays: 14,
+        returnMethod: "https://schema.org/ReturnByMail",
       },
     },
+    ...(stats
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: stats.average.toFixed(1),
+            reviewCount: stats.count,
+            bestRating: 5,
+          },
+          review: stats.reviews.slice(0, 5).map((r) => ({
+            "@type": "Review",
+            reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5 },
+            author: { "@type": "Person", name: r.authorName },
+            reviewBody: r.body,
+            ...(r.reviewedAt ? { datePublished: r.reviewedAt } : {}),
+          })),
+        }
+      : {}),
   };
 
   return (
     <div className={`${container} pt-[clamp(20px,3vw,40px)] pb-[clamp(56px,7vw,96px)]`}>
       <JsonLd data={productLd} />
-      <nav aria-label="Breadcrumb" className="mb-6 text-xs text-muted">
-        <ol className="flex flex-wrap gap-1.5">
-          <li><Link href="/" className="hover:text-lilac">Home</Link> /</li>
-          <li><Link href="/shop" className="hover:text-lilac">Babies</Link> /</li>
-          <li aria-current="page" className="text-cocoa">{product.title}</li>
-        </ol>
-      </nav>
+      <Breadcrumbs items={breadcrumbs} />
 
       <div className="grid grid-cols-1 gap-[clamp(24px,4vw,56px)] lg:grid-cols-[1.1fr_1fr]">
         <ProductGallery images={product.images} title={product.title} />
 
         <div className="flex flex-col gap-5">
-          {product.badge ? (
-            <span className={`w-fit rounded-[14px] px-3 py-1.5 text-xs font-bold ${badgeTone(product.badge)}`}>{product.badge}</span>
-          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            {product.badge ? (
+              <span className={`w-fit rounded-[14px] px-3 py-1.5 text-xs font-bold ${badgeTone(product.badge)}`}>{product.badge}</span>
+            ) : null}
+            {category && categoryHeading ? (
+              <Link href={categoryPath(category.slug)} className="text-xs font-bold text-lilac hover:underline">
+                {categoryHeading}
+              </Link>
+            ) : null}
+          </div>
           <div>
             <h1 className="font-serif text-[clamp(34px,4.5vw,54px)] leading-[1.05] font-medium text-pretty">{product.title}</h1>
             <p className="mt-2 text-sm text-muted">{productMeta(product)}</p>
+            {stats ? (
+              <a href="#product-reviews" className="mt-2 flex items-center gap-2 text-sm text-muted hover:text-lilac">
+                <Stars rating={stats.average} />
+                {stats.average.toFixed(1)} · {stats.count} {stats.count === 1 ? "review" : "reviews"}
+              </a>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap items-baseline gap-3">
@@ -181,11 +200,38 @@ async function ProductDetail({ params }: Pick<PageProps<"/shop/[slug]">, "params
         </div>
       </div>
 
+      {stats ? (
+        <section id="product-reviews" aria-labelledby="reviews-heading" className="mt-[clamp(48px,6vw,80px)] scroll-mt-24">
+          <h2 id="reviews-heading" className="mb-5 font-serif text-[clamp(28px,3vw,40px)] font-medium">
+            What families say
+          </h2>
+          <ul className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
+            {stats.reviews.slice(0, 6).map((r) => (
+              <li key={r.id} className="flex flex-col gap-3 rounded-[20px] border border-line bg-white p-[22px]">
+                <Stars rating={r.rating} />
+                <p className="font-serif text-[19px] leading-snug">“{r.body}”</p>
+                <p className="mt-auto text-xs text-muted">
+                  <b className="text-cocoa">{r.authorName}</b>
+                  {r.reviewedAt ? ` · ${formatDate(r.reviewedAt)}` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {related.length ? (
         <section aria-labelledby="related-heading" className="mt-[clamp(56px,7vw,96px)]">
-          <h2 id="related-heading" className="mb-6 font-serif text-[clamp(28px,3vw,40px)] font-medium">
-            You may also love
-          </h2>
+          <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+            <h2 id="related-heading" className="font-serif text-[clamp(28px,3vw,40px)] font-medium">
+              You may also love
+            </h2>
+            {category && categoryHeading ? (
+              <Link href={categoryPath(category.slug)} className="text-sm font-bold text-lilac hover:underline">
+                All {categoryHeading.toLowerCase()} →
+              </Link>
+            ) : null}
+          </div>
           <div className="grid grid-cols-1 gap-[18px] min-[560px]:grid-cols-2 lg:grid-cols-4">
             {related.map((p) => (
               <ProductCard key={p.id} product={p} />
@@ -197,7 +243,7 @@ async function ProductDetail({ params }: Pick<PageProps<"/shop/[slug]">, "params
   );
 }
 
-function ProductSkeleton() {
+export function ProductSkeleton() {
   return (
     <div className={`${container} py-10`} aria-hidden>
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_1fr]">

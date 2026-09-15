@@ -1,10 +1,9 @@
-import type { Metadata } from "next";
 import { LegalPage } from "@/components/site/legal-page";
+import { staticPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Cookie policy",
-  alternates: { canonical: "/cookies" },
-};
+export function generateMetadata() {
+  return staticPageMetadata("/cookies");
+}
 
 export default function CookiesPage() {
   return (
