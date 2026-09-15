@@ -3,16 +3,16 @@
 import { savePageSeo } from "@/lib/admin/actions/seo";
 import { pageSeoDefaults } from "@/lib/content/page-seo";
 import type { PageSeo } from "@/lib/types";
-import { adminButton, AdminCard, Field, FormMessage, inputClass } from "./form-ui";
+import { adminButton, AdminCard, Field, FormMessage, inputClass, MobileSaveBar, SaveStatus } from "./form-ui";
 import { SeoFields } from "./seo-fields";
 import { useFormAction } from "./use-form-action";
 
 export function PageSeoForm({ pages, googleSiteVerification }: { pages: Record<string, PageSeo>; googleSiteVerification: string | null }) {
-  const { state, pending, onSubmit } = useFormAction(savePageSeo);
+  const { state, pending, onSubmit, onInput, dirty } = useFormAction(savePageSeo, { warnUnsaved: true });
   const errors = state?.fieldErrors ?? {};
 
   return (
-    <form onSubmit={onSubmit} className="flex max-w-3xl flex-col gap-6">
+    <form onSubmit={onSubmit} onInput={onInput} className="flex max-w-3xl flex-col gap-6">
       <AdminCard title="Google Search Console">
         <Field
           label="Verification code"
@@ -46,12 +46,16 @@ export function PageSeoForm({ pages, googleSiteVerification }: { pages: Record<s
         </AdminCard>
       ))}
 
-      <div className="sticky bottom-4 flex flex-col gap-3 rounded-[20px] border border-line bg-white/95 p-4 backdrop-blur">
-        <FormMessage state={state} />
-        <button type="submit" disabled={pending} className={`${adminButton} w-fit`}>
+      <div className="sticky bottom-4 hidden items-center gap-4 rounded-[20px] border border-line bg-white/95 p-4 backdrop-blur xl:flex">
+        <button type="submit" disabled={pending} className={`${adminButton} flex-none`}>
           {pending ? "Saving…" : "Save SEO"}
         </button>
+        <div className="min-w-0 flex-1">
+          <FormMessage state={state} />
+          <SaveStatus dirty={dirty} pending={pending} />
+        </div>
       </div>
+      <MobileSaveBar state={state} pending={pending} dirty={dirty} label="Save SEO" />
     </form>
   );
 }

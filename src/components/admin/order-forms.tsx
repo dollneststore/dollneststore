@@ -5,15 +5,15 @@ import { createManualOrder, updateOrder } from "@/lib/admin/actions/orders";
 import type { AdminOrder, ProductOption } from "@/lib/admin/types";
 import { formatPrice } from "@/lib/format";
 import { orderChannels, orderStatuses } from "@/lib/types";
-import { adminButton, adminButtonSecondary, AdminCard, Field, FormMessage, inputClass } from "./form-ui";
+import { adminButton, adminButtonSecondary, AdminCard, Field, FormMessage, inputClass, MobileSaveBar, SaveStatus } from "./form-ui";
 import { useFormAction } from "./use-form-action";
 
 export function OrderUpdateForm({ order }: { order: AdminOrder }) {
-  const { state, pending, onSubmit } = useFormAction(updateOrder);
+  const { state, pending, onSubmit, onInput, dirty } = useFormAction(updateOrder, { warnUnsaved: true });
   const errors = state?.fieldErrors ?? {};
 
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={onSubmit} onInput={onInput}>
       <AdminCard title="Update order">
         <input type="hidden" name="id" value={order.id} />
         <Field label="Status" htmlFor="status" error={errors.status}>
@@ -45,18 +45,19 @@ export function OrderUpdateForm({ order }: { order: AdminOrder }) {
         <button type="submit" disabled={pending} className={adminButton}>
           {pending ? "Saving…" : "Save"}
         </button>
+        <SaveStatus dirty={dirty} pending={pending} />
       </AdminCard>
     </form>
   );
 }
 
 export function ManualOrderForm({ products }: { products: ProductOption[] }) {
-  const { state, pending, onSubmit } = useFormAction(createManualOrder);
+  const { state, pending, onSubmit, onInput, markDirty, dirty } = useFormAction(createManualOrder, { warnUnsaved: true });
   const [rows, setRows] = useState(1);
   const errors = state?.fieldErrors ?? {};
 
   return (
-    <form onSubmit={onSubmit} className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
+    <form onSubmit={onSubmit} onInput={onInput} className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
       <div className="flex min-w-0 flex-col gap-6">
         <AdminCard title="Babies">
           {products.length === 0 ? <p className="text-sm text-muted">There are no active products with stock.</p> : null}
@@ -74,7 +75,14 @@ export function ManualOrderForm({ products }: { products: ProductOption[] }) {
             </div>
           ))}
           {rows < 10 ? (
-            <button type="button" onClick={() => setRows((r) => r + 1)} className={`${adminButtonSecondary} w-fit`}>
+            <button
+              type="button"
+              onClick={() => {
+                setRows((r) => r + 1);
+                markDirty();
+              }}
+              className={`${adminButtonSecondary} w-fit`}
+            >
               + Add another baby
             </button>
           ) : null}
@@ -139,12 +147,17 @@ export function ManualOrderForm({ products }: { products: ProductOption[] }) {
             <textarea id="notes" name="notes" rows={3} className={inputClass} />
           </Field>
         </AdminCard>
-        <FormMessage state={state} />
-        <button type="submit" disabled={pending || products.length === 0} className={adminButton}>
-          {pending ? "Saving…" : "Record order"}
-        </button>
+        <div className="hidden flex-col gap-3 xl:flex">
+          <FormMessage state={state} />
+          <button type="submit" disabled={pending || products.length === 0} className={adminButton}>
+            {pending ? "Saving…" : "Record order"}
+          </button>
+          <SaveStatus dirty={dirty} pending={pending} />
+        </div>
         <p className="text-xs text-muted">Stock is reduced automatically. Babies reaching 0 are marked as rehomed.</p>
       </div>
+
+      <MobileSaveBar state={state} pending={pending} dirty={dirty} label="Record order" />
     </form>
   );
 }

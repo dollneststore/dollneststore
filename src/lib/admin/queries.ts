@@ -19,6 +19,7 @@ import {
 } from "@/lib/data/mappers";
 import {
   orderStatuses,
+  productStatuses,
   type Category,
   type Guide,
   type OrderChannel,
@@ -29,7 +30,7 @@ import {
   type SiteSettings,
 } from "@/lib/types";
 import { adminContext } from "./context";
-import type { AdminOrder, AdminOrderListItem, DashboardStats, ProductOption } from "./types";
+import type { AdminOrder, AdminOrderListItem, DashboardStats, ProductFilters, ProductOption } from "./types";
 import { SLUG_PATTERN } from "./validation";
 
 const ORDER_LIST_COLUMNS = "id, order_number, status, channel, customer_name, total_pence, created_at";
@@ -58,13 +59,32 @@ function mapOrderListItem(row: OrderListRow): AdminOrderListItem {
 
 const isUuid = (value: string) => z.uuid().safeParse(value).success;
 
-export async function getAdminProducts(): Promise<Product[]> {
+/**
+ * Search text for PostgREST `or()` filters: keep letters, numbers and a few safe symbols only,
+ * so commas, parentheses and wildcards can't change the filter.
+ */
+function searchTerm(value: string | undefined, extra = "") {
+  const pattern = new RegExp(`[^\\p{L}\\p{N} '\\-${extra}]`, "gu");
+  return (value ?? "").replace(pattern, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+}
+
+export async function getAdminProducts(filters: ProductFilters = {}): Promise<Product[]> {
   const { supabase } = await adminContext();
-  const { data, error } = await supabase
-    .from("products")
-    .select(PRODUCT_COLUMNS)
-    .order("sort_order")
-    .order("created_at", { ascending: false });
+  let query = supabase.from("products").select(PRODUCT_COLUMNS);
+
+  const q = searchTerm(filters.q);
+  if (q) query = query.or(`title.ilike.%${q}%,slug.ilike.%${q.replace(/\s+/g, "-")}%`);
+
+  const status = z.enum(productStatuses).safeParse(filters.status);
+  if (status.success) query = query.eq("status", status.data);
+
+  if (filters.collection === "none") query = query.is("category_slug", null);
+  else if (filters.collection && SLUG_PATTERN.test(filters.collection)) query = query.eq("category_slug", filters.collection);
+
+  if (filters.stock === "out") query = query.eq("stock_qty", 0);
+  else if (filters.stock === "in") query = query.gt("stock_qty", 0);
+
+  const { data, error } = await query.order("sort_order").order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data as ProductRow[]).map(mapProduct);
 }
@@ -141,11 +161,20 @@ export async function getReviewProductOptions(): Promise<{ id: string; title: st
   return data.map((p) => ({ id: p.id, title: `${p.title} (${p.slug})` }));
 }
 
-export async function getAdminOrders(status?: string): Promise<AdminOrderListItem[]> {
+export async function getAdminOrders(filters: { status?: string; q?: string } = {}): Promise<AdminOrderListItem[]> {
   const { supabase } = await adminContext();
   let query = supabase.from("orders").select(ORDER_LIST_COLUMNS);
-  const parsedStatus = z.enum(orderStatuses).safeParse(status);
-  if (parsedStatus.success) query = query.eq("status", parsedStatus.data);
+
+  const status = z.enum(orderStatuses).safeParse(filters.status);
+  if (status.success) query = query.eq("status", status.data);
+
+  const q = searchTerm(filters.q, "@.+");
+  if (q) {
+    query = query.or(
+      ["order_number", "customer_name", "customer_email", "customer_phone", "shipping_postcode"].map((column) => `${column}.ilike.%${q}%`).join(","),
+    );
+  }
+
   const { data, error } = await query.order("created_at", { ascending: false }).limit(200);
   if (error) throw new Error(error.message);
   return (data as OrderListRow[]).map(mapOrderListItem);
@@ -218,20 +247,52 @@ export async function getAdminSettings(): Promise<SiteSettings> {
 export async function getDashboardStats(): Promise<DashboardStats> {
   const { supabase } = await adminContext();
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const count = { count: "exact" as const, head: true };
 
-  const [products, openOrders, recentRevenue, subscribers, recent] = await Promise.all([
-    supabase.from("products").select("id", { count: "exact", head: true }).eq("status", "active").gt("stock_qty", 0),
-    supabase.from("orders").select("id", { count: "exact", head: true }).in("status", ["pending", "paid", "processing"]),
+  const [
+    products,
+    openOrders,
+    recentRevenue,
+    subscribers,
+    recent,
+    toDispatch,
+    awaitingPayment,
+    activeOutOfStock,
+    draftProducts,
+    draftGuides,
+    unlinkedReviews,
+  ] = await Promise.all([
+    supabase.from("products").select("id", count).eq("status", "active").gt("stock_qty", 0),
+    supabase.from("orders").select("id", count).in("status", ["pending", "paid", "processing"]),
+    supabase.from("orders").select("total_pence").in("status", ["paid", "processing", "dispatched", "delivered"]).gte("paid_at", since),
+    supabase.from("newsletter_subscribers").select("id", count).is("unsubscribed_at", null),
+    supabase.from("orders").select(ORDER_LIST_COLUMNS).order("created_at", { ascending: false }).limit(6),
     supabase
       .from("orders")
-      .select("total_pence")
-      .in("status", ["paid", "processing", "dispatched", "delivered"])
-      .gte("paid_at", since),
-    supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }).is("unsubscribed_at", null),
-    supabase.from("orders").select(ORDER_LIST_COLUMNS).order("created_at", { ascending: false }).limit(6),
+      .select(ORDER_LIST_COLUMNS, { count: "exact" })
+      .in("status", ["paid", "processing"])
+      .order("created_at", { ascending: true })
+      .limit(5),
+    supabase.from("orders").select("id", count).eq("status", "pending"),
+    supabase.from("products").select("id", count).eq("status", "active").eq("stock_qty", 0),
+    supabase.from("products").select("id", count).eq("status", "draft"),
+    supabase.from("posts").select("id", count).eq("status", "draft"),
+    supabase.from("reviews").select("id", count).eq("is_published", true).is("product_id", null),
   ]);
 
-  const firstError = [products, openOrders, recentRevenue, subscribers, recent].find((r) => r.error)?.error;
+  const firstError = [
+    products,
+    openOrders,
+    recentRevenue,
+    subscribers,
+    recent,
+    toDispatch,
+    awaitingPayment,
+    activeOutOfStock,
+    draftProducts,
+    draftGuides,
+    unlinkedReviews,
+  ].find((r) => r.error)?.error;
   if (firstError) throw new Error(firstError.message);
 
   const revenueRows = recentRevenue.data ?? [];
@@ -242,5 +303,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     revenue30dPence: revenueRows.reduce((sum, r) => sum + r.total_pence, 0),
     subscribers: subscribers.count ?? 0,
     recentOrders: ((recent.data ?? []) as OrderListRow[]).map(mapOrderListItem),
+    todo: {
+      toDispatch: ((toDispatch.data ?? []) as OrderListRow[]).map(mapOrderListItem),
+      toDispatchCount: toDispatch.count ?? 0,
+      awaitingPayment: awaitingPayment.count ?? 0,
+      activeOutOfStock: activeOutOfStock.count ?? 0,
+      draftProducts: draftProducts.count ?? 0,
+      draftGuides: draftGuides.count ?? 0,
+      unlinkedReviews: unlinkedReviews.count ?? 0,
+    },
   };
 }

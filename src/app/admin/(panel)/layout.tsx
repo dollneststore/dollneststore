@@ -7,9 +7,9 @@ import { getAdmin, requireAdmin } from "@/lib/auth";
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col lg:flex-row">
-      <aside className="border-b border-line bg-white lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-60 lg:flex-none lg:flex-col lg:border-r lg:border-b-0">
-        <div className="flex items-center justify-between gap-3 p-4 lg:p-6">
+    <div className="flex min-h-dvh flex-col lg:flex-row print:block">
+      <aside className="sticky top-0 z-20 border-b border-line bg-white lg:flex lg:h-dvh lg:w-60 lg:flex-none lg:flex-col lg:border-r lg:border-b-0 print:hidden">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 lg:p-6">
           <Link href="/admin" className="font-serif text-2xl font-semibold text-lilac">
             Dollnest
             <span className="ml-1.5 align-middle font-sans text-[10px] font-bold uppercase tracking-[.16em] text-muted">Admin</span>
@@ -37,7 +37,8 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
           </form>
         </div>
       </aside>
-      <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-10">
+      {/* Extra bottom padding below xl leaves room for the fixed mobile save bar. */}
+      <main className="min-w-0 flex-1 p-4 pb-28 sm:p-6 sm:pb-28 lg:p-10 lg:pb-28 xl:pb-10 print:p-0">
         <Suspense fallback={<LoadingBlock />}>
           <AdminGate>{children}</AdminGate>
         </Suspense>

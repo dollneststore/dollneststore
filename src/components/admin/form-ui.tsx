@@ -108,3 +108,24 @@ export function StatusBadge({ status }: { status: string }) {
 export function LoadingBlock() {
   return <div className="h-64 animate-pulse rounded-[20px] bg-white" aria-label="Loading" />;
 }
+
+export function SaveStatus({ dirty, pending }: { dirty: boolean; pending: boolean }) {
+  if (!dirty || pending) return null;
+  return <p className="text-center text-xs font-semibold text-peach-deep">● Unsaved changes</p>;
+}
+
+/** Fixed save bar for phones and tablets; the desktop layout keeps its sidebar button. Place inside the <form>. */
+export function MobileSaveBar({ state, pending, dirty, label }: { state: FormState; pending: boolean; dirty: boolean; label: string }) {
+  const message = pending ? "Saving…" : state && !state.ok ? state.message : dirty ? "● Unsaved changes" : (state?.message ?? "");
+  const tone = state && !state.ok && !pending ? "text-rose" : dirty ? "text-peach-deep" : "text-sage-deep";
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-3 border-t border-line bg-white/95 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur-md xl:hidden print:hidden">
+      <p aria-live="polite" className={`min-w-0 flex-1 truncate text-xs font-semibold ${tone}`}>
+        {message}
+      </p>
+      <button type="submit" disabled={pending} className={`${adminButton} flex-none`}>
+        {pending ? "Saving…" : label}
+      </button>
+    </div>
+  );
+}

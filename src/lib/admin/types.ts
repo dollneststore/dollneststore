@@ -46,6 +46,13 @@ export type ProductOption = {
   stockQty: number;
 };
 
+export type ProductFilters = {
+  q?: string;
+  status?: string;
+  collection?: string;
+  stock?: string;
+};
+
 export type DashboardStats = {
   activeProducts: number;
   openOrders: number;
@@ -53,4 +60,13 @@ export type DashboardStats = {
   revenue30dPence: number;
   subscribers: number;
   recentOrders: AdminOrderListItem[];
+  todo: {
+    toDispatch: AdminOrderListItem[];
+    toDispatchCount: number;
+    awaitingPayment: number;
+    activeOutOfStock: number;
+    draftProducts: number;
+    draftGuides: number;
+    unlinkedReviews: number;
+  };
 };

@@ -5,8 +5,9 @@ import { Suspense } from "react";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { adminButtonSecondary, LoadingBlock } from "@/components/admin/form-ui";
 import { ProductForm } from "@/components/admin/product-form";
-import { deleteProduct } from "@/lib/admin/actions/products";
+import { deleteProduct, duplicateProduct } from "@/lib/admin/actions/products";
 import { getAdminCategories, getAdminProduct } from "@/lib/admin/queries";
+import { productPath } from "@/lib/seo-defaults";
 
 export const metadata: Metadata = { title: "Edit product" };
 
@@ -34,16 +35,27 @@ async function EditProduct({ params, searchParams }: PageProps<"/admin/products/
         <div>
           <h1 className="font-serif text-4xl font-medium">{product.title}</h1>
           {query.created ? <p className="mt-1 text-sm font-semibold text-sage-deep">Product created ♡</p> : null}
+          {query.duplicated ? (
+            <p className="mt-1 text-sm font-semibold text-sage-deep">
+              Copy created as a draft ♡ Update the name, photos and stock, then set it to Active.
+            </p>
+          ) : null}
           {query.imageError ? (
             <p className="mt-1 text-sm font-semibold text-rose">Some photos couldn&apos;t be attached — please add them again.</p>
           ) : null}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {product.status === "active" || product.status === "sold_out" ? (
-            <Link href={`/reborn-dolls/${product.slug}`} target="_blank" className={adminButtonSecondary}>
+            <Link href={productPath(product.slug)} target="_blank" className={adminButtonSecondary}>
               View on shop ↗
             </Link>
           ) : null}
+          <form action={duplicateProduct}>
+            <input type="hidden" name="id" value={product.id} />
+            <button type="submit" className={adminButtonSecondary}>
+              Duplicate
+            </button>
+          </form>
           <form action={deleteProduct}>
             <input type="hidden" name="id" value={product.id} />
             <ConfirmButton

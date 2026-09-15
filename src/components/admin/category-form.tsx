@@ -5,12 +5,12 @@ import { saveCategory } from "@/lib/admin/actions/categories";
 import { slugify } from "@/lib/format";
 import { categoryDefaults, categoryPath } from "@/lib/seo-defaults";
 import { tints, type Category } from "@/lib/types";
-import { adminButton, AdminCard, Field, FormMessage, inputClass } from "./form-ui";
+import { adminButton, AdminCard, Field, FormMessage, inputClass, MobileSaveBar, SaveStatus } from "./form-ui";
 import { SeoFields } from "./seo-fields";
 import { useFormAction } from "./use-form-action";
 
 export function CategoryForm({ category }: { category?: Category }) {
-  const { state, pending, onSubmit } = useFormAction(saveCategory);
+  const { state, pending, onSubmit, onInput, dirty } = useFormAction(saveCategory, { warnUnsaved: true });
   const [name, setName] = useState(category?.name ?? "");
   const [slug, setSlug] = useState(category?.slug ?? "");
   const [slugEdited, setSlugEdited] = useState(Boolean(category));
@@ -18,7 +18,7 @@ export function CategoryForm({ category }: { category?: Category }) {
   const defaults = categoryDefaults({ slug: slug || "new", name: name || "New collection" });
 
   return (
-    <form onSubmit={onSubmit} className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
+    <form onSubmit={onSubmit} onInput={onInput} className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
       {category ? <input type="hidden" name="originalSlug" value={category.slug} /> : null}
 
       <div className="flex min-w-0 flex-col gap-6">
@@ -99,11 +99,16 @@ export function CategoryForm({ category }: { category?: Category }) {
             <input id="sortOrder" name="sortOrder" type="number" defaultValue={category?.sortOrder ?? 0} className={inputClass} />
           </Field>
         </AdminCard>
-        <FormMessage state={state} />
-        <button type="submit" disabled={pending} className={adminButton}>
-          {pending ? "Saving…" : category ? "Save changes" : "Create collection"}
-        </button>
+        <div className="hidden flex-col gap-3 xl:flex">
+          <FormMessage state={state} />
+          <button type="submit" disabled={pending} className={adminButton}>
+            {pending ? "Saving…" : category ? "Save changes" : "Create collection"}
+          </button>
+          <SaveStatus dirty={dirty} pending={pending} />
+        </div>
       </div>
+
+      <MobileSaveBar state={state} pending={pending} dirty={dirty} label={category ? "Save" : "Create"} />
     </form>
   );
 }

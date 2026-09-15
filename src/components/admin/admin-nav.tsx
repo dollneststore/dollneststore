@@ -14,16 +14,20 @@ const links = [
   { href: "/admin/settings", label: "Settings" },
 ];
 
+const isActive = (pathname: string | null, href: string) =>
+  pathname !== null && (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
+
 export function AdminNav() {
   return <AdminNavLinks pathname={usePathname()} />;
 }
 
 /** Rendered without an active state while the pathname streams in (Suspense fallback). */
 export function AdminNavLinks({ pathname }: { pathname: string | null }) {
-  return (
-    <nav aria-label="Admin" className="flex gap-1 overflow-x-auto px-4 pb-3 text-sm font-semibold lg:flex-col lg:px-4 lg:pb-0">
+  const current = links.find((link) => isActive(pathname, link.href));
+  const renderLinks = (className: string, onPhone: boolean) => (
+    <nav aria-label={onPhone ? "Admin menu" : "Admin"} className={className}>
       {links.map((link) => {
-        const active = pathname !== null && (link.href === "/admin" ? pathname === "/admin" : pathname.startsWith(link.href));
+        const active = isActive(pathname, link.href);
         return (
           <Link
             key={link.href}
@@ -38,5 +42,24 @@ export function AdminNavLinks({ pathname }: { pathname: string | null }) {
         );
       })}
     </nav>
+  );
+
+  return (
+    <>
+      {/* Phones/tablets: a compact dropdown; it remounts (closes) after each navigation. */}
+      <details key={pathname ?? "loading"} className="group border-t border-line lg:hidden">
+        <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-semibold">
+          <span>
+            <span className="text-muted">Menu · </span>
+            {current?.label ?? "Admin"}
+          </span>
+          <span className="text-lilac transition-transform group-open:rotate-180" aria-hidden>
+            ▾
+          </span>
+        </summary>
+        {renderLinks("grid grid-cols-2 gap-1 px-3 pb-3 text-sm font-semibold", true)}
+      </details>
+      {renderLinks("hidden flex-col gap-1 px-4 text-sm font-semibold lg:flex", false)}
+    </>
   );
 }

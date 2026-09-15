@@ -7,7 +7,7 @@ import { slugify } from "@/lib/format";
 import { defaultGuideDescription, defaultGuideTitle, guidePath } from "@/lib/seo-defaults";
 import { createClient } from "@/lib/supabase/browser";
 import type { Guide } from "@/lib/types";
-import { adminButton, AdminCard, Field, FormMessage, inputClass } from "./form-ui";
+import { adminButton, AdminCard, Field, FormMessage, inputClass, MobileSaveBar, SaveStatus } from "./form-ui";
 import { SeoFields } from "./seo-fields";
 import { useFormAction } from "./use-form-action";
 
@@ -21,7 +21,7 @@ const EXTENSIONS: Record<string, string> = {
 };
 
 export function GuideForm({ guide }: { guide?: Guide }) {
-  const { state, pending, onSubmit } = useFormAction(saveGuide);
+  const { state, pending, onSubmit, onInput, markDirty, dirty } = useFormAction(saveGuide, { warnUnsaved: true });
   const [title, setTitle] = useState(guide?.title ?? "");
   const [slug, setSlug] = useState(guide?.slug ?? "");
   const [slugEdited, setSlugEdited] = useState(Boolean(guide));
@@ -30,7 +30,7 @@ export function GuideForm({ guide }: { guide?: Guide }) {
   const errors = state?.fieldErrors ?? {};
 
   return (
-    <form onSubmit={onSubmit} className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
+    <form onSubmit={onSubmit} onInput={onInput} className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
       {guide ? <input type="hidden" name="id" value={guide.id} /> : null}
 
       <div className="flex min-w-0 flex-col gap-6">
@@ -114,18 +114,36 @@ export function GuideForm({ guide }: { guide?: Guide }) {
         </AdminCard>
 
         {/* Remount after the saved cover changes so a finished upload isn't treated as pending. */}
-        <CoverField key={guide?.coverImageUrl ?? "none"} currentUrl={guide?.coverImageUrl ?? null} onUploading={setUploading} />
+        <CoverField
+          key={guide?.coverImageUrl ?? "none"}
+          currentUrl={guide?.coverImageUrl ?? null}
+          onUploading={setUploading}
+          onChange={markDirty}
+        />
 
-        <FormMessage state={state} />
-        <button type="submit" disabled={pending || uploading} className={adminButton}>
-          {pending ? "Saving…" : guide ? "Save guide" : "Create guide"}
-        </button>
+        <div className="hidden flex-col gap-3 xl:flex">
+          <FormMessage state={state} />
+          <button type="submit" disabled={pending || uploading} className={adminButton}>
+            {pending ? "Saving…" : guide ? "Save guide" : "Create guide"}
+          </button>
+          <SaveStatus dirty={dirty} pending={pending} />
+        </div>
       </div>
+
+      <MobileSaveBar state={state} pending={pending || uploading} dirty={dirty} label={guide ? "Save" : "Create"} />
     </form>
   );
 }
 
-function CoverField({ currentUrl, onUploading }: { currentUrl: string | null; onUploading: (busy: boolean) => void }) {
+function CoverField({
+  currentUrl,
+  onUploading,
+  onChange,
+}: {
+  currentUrl: string | null;
+  onUploading: (busy: boolean) => void;
+  onChange: () => void;
+}) {
   const [cover, setCover] = useState<{ path: string; preview: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -145,6 +163,7 @@ function CoverField({ currentUrl, onUploading }: { currentUrl: string | null; on
     onUploading(false);
     if (uploadError) return setError(uploadError.message);
     setCover({ path, preview: URL.createObjectURL(file) });
+    onChange();
   }
 
   return (
@@ -153,9 +172,9 @@ function CoverField({ currentUrl, onUploading }: { currentUrl: string | null; on
       {cover ? (
         // Blob previews can't go through next/image.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={cover.preview} alt="" className="aspect-[16/9] w-full rounded-xl object-cover" />
+        <img src={cover.preview} alt="" className="aspect-video w-full rounded-xl object-cover" />
       ) : currentUrl ? (
-        <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-blush">
+        <div className="relative aspect-video overflow-hidden rounded-xl bg-blush">
           <Image src={currentUrl} alt="" fill sizes="300px" className="object-cover" />
         </div>
       ) : null}

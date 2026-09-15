@@ -5,7 +5,7 @@ import { saveProduct } from "@/lib/admin/actions/products";
 import { penceToPounds, slugify } from "@/lib/format";
 import { defaultProductDescription, defaultProductTitle, productPath } from "@/lib/seo-defaults";
 import { genders, productStatuses, type Category, type Product } from "@/lib/types";
-import { adminButton, AdminCard, Field, FormMessage, inputClass } from "./form-ui";
+import { adminButton, AdminCard, Field, FormMessage, inputClass, MobileSaveBar, SaveStatus } from "./form-ui";
 import { ImageUploader } from "./image-uploader";
 import { SeoFields } from "./seo-fields";
 import { useFormAction } from "./use-form-action";
@@ -18,7 +18,7 @@ const statusLabels: Record<(typeof productStatuses)[number], string> = {
 };
 
 export function ProductForm({ product, categories }: { product?: Product; categories: Category[] }) {
-  const { state, pending, onSubmit } = useFormAction(saveProduct);
+  const { state, pending, onSubmit, onInput, markDirty, dirty } = useFormAction(saveProduct, { warnUnsaved: true });
   const [title, setTitle] = useState(product?.title ?? "");
   const [slug, setSlug] = useState(product?.slug ?? "");
   const [slugEdited, setSlugEdited] = useState(Boolean(product));
@@ -26,7 +26,7 @@ export function ProductForm({ product, categories }: { product?: Product; catego
   const previewName = title || "Product name";
 
   return (
-    <form onSubmit={onSubmit} className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
+    <form onSubmit={onSubmit} onInput={onInput} className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
       {product ? <input type="hidden" name="id" value={product.id} /> : null}
 
       <div className="flex min-w-0 flex-col gap-6">
@@ -75,7 +75,11 @@ export function ProductForm({ product, categories }: { product?: Product; catego
 
         <AdminCard title="Photos">
           {/* Remount when saved images change so pending uploads aren't submitted twice. */}
-          <ImageUploader key={product?.images.map((img) => img.id).join(",") ?? "new"} images={product?.images ?? []} />
+          <ImageUploader
+            key={product?.images.map((img) => img.id).join(",") ?? "new"}
+            images={product?.images ?? []}
+            onChange={markDirty}
+          />
         </AdminCard>
 
         <AdminCard title="Baby details">
@@ -172,13 +176,16 @@ export function ProductForm({ product, categories }: { product?: Product; catego
           </Field>
         </AdminCard>
 
-        <div className="flex flex-col gap-3">
+        <div className="hidden flex-col gap-3 xl:flex">
           <FormMessage state={state} />
           <button type="submit" disabled={pending} className={adminButton}>
             {pending ? "Saving…" : product ? "Save changes" : "Create product"}
           </button>
+          <SaveStatus dirty={dirty} pending={pending} />
         </div>
       </div>
+
+      <MobileSaveBar state={state} pending={pending} dirty={dirty} label={product ? "Save" : "Create"} />
     </form>
   );
 }
