@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { allowRequest, clientIp } from "@/lib/rate-limit";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export type NewsletterState = { ok: boolean; message: string } | null;
@@ -17,8 +18,18 @@ export async function subscribeToNewsletter(_prev: NewsletterState, formData: Fo
   const db = createServiceClient();
   if (!db) return { ok: false, message: "Sign-ups open very soon — please try again later." };
 
-  const { error } = await db.from("newsletter_subscribers").insert({ email: parsed.data.email });
-  if (error && error.code !== "23505") {
+  if (!(await allowRequest("newsletter", await clientIp(), 5, 60 * 60))) {
+    return { ok: false, message: "Too many sign-ups from this connection. Please try again later." };
+  }
+
+  // Upsert so someone who unsubscribed earlier can join again.
+  const { error } = await db
+    .from("newsletter_subscribers")
+    .upsert(
+      { email: parsed.data.email, consented_at: new Date().toISOString(), unsubscribed_at: null },
+      { onConflict: "email" },
+    );
+  if (error) {
     console.error("[newsletter]", error.message);
     return { ok: false, message: "Something went wrong. Please try again." };
   }

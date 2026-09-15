@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { resolveSettings } from "@/lib/data/catalog";
 import {
   CATEGORY_COLUMNS,
   GUIDE_COLUMNS,
@@ -16,7 +17,6 @@ import {
   type ProductRow,
   type ReviewRow,
 } from "@/lib/data/mappers";
-import { defaultAnnouncement, defaultSocials } from "@/lib/site";
 import {
   orderStatuses,
   type Category,
@@ -27,7 +27,6 @@ import {
   type Product,
   type Review,
   type SiteSettings,
-  type Socials,
 } from "@/lib/types";
 import { adminContext } from "./context";
 import type { AdminOrder, AdminOrderListItem, DashboardStats, ProductOption } from "./types";
@@ -134,6 +133,14 @@ export async function getProductOptions(): Promise<ProductOption[]> {
   return data.map((p) => ({ id: p.id, title: p.title, pricePence: p.price_pence, stockQty: p.stock_qty }));
 }
 
+/** Every product (any status) so a review can be linked to a doll that has since sold. */
+export async function getReviewProductOptions(): Promise<{ id: string; title: string }[]> {
+  const { supabase } = await adminContext();
+  const { data, error } = await supabase.from("products").select("id, title, slug").order("title");
+  if (error) throw new Error(error.message);
+  return data.map((p) => ({ id: p.id, title: `${p.title} (${p.slug})` }));
+}
+
 export async function getAdminOrders(status?: string): Promise<AdminOrderListItem[]> {
   const { supabase } = await adminContext();
   let query = supabase.from("orders").select(ORDER_LIST_COLUMNS);
@@ -205,12 +212,7 @@ export async function getAdminSettings(): Promise<SiteSettings> {
     .eq("id", 1)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  const saved = (data?.socials ?? {}) as Partial<Socials>;
-  return {
-    announcement: data?.announcement || defaultAnnouncement,
-    socials: { ...defaultSocials, ...Object.fromEntries(Object.entries(saved).filter(([, v]) => Boolean(v))) },
-    googleSiteVerification: data?.google_site_verification ?? null,
-  };
+  return resolveSettings(data);
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -218,13 +220,13 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   const [products, openOrders, recentRevenue, subscribers, recent] = await Promise.all([
-    supabase.from("products").select("id", { count: "exact", head: true }).eq("status", "active"),
+    supabase.from("products").select("id", { count: "exact", head: true }).eq("status", "active").gt("stock_qty", 0),
     supabase.from("orders").select("id", { count: "exact", head: true }).in("status", ["pending", "paid", "processing"]),
     supabase
       .from("orders")
       .select("total_pence")
       .in("status", ["paid", "processing", "dispatched", "delivered"])
-      .gte("created_at", since),
+      .gte("paid_at", since),
     supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }).is("unsubscribed_at", null),
     supabase.from("orders").select(ORDER_LIST_COLUMNS).order("created_at", { ascending: false }).limit(6),
   ]);

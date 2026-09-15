@@ -131,7 +131,7 @@ async function OrderDetail({ params }: Pick<PageProps<"/admin/orders/[id]">, "pa
           </AdminCard>
         </div>
 
-        <OrderUpdateForm key={`${order.id}-${order.status}`} order={order} />
+        <OrderUpdateForm key={order.id} order={order} />
       </div>
     </>
   );

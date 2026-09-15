@@ -42,11 +42,12 @@ export async function saveCategory(_prev: FormState, formData: FormData): Promis
   };
 
   if (originalSlug) {
-    const { error } = await supabase.from("categories").update(row).eq("slug", originalSlug);
+    const { data: updated, error } = await supabase.from("categories").update(row).eq("slug", originalSlug).select("slug");
     if (error) {
       console.error("[admin/categories]", error.message);
       return { ok: false, message: "Could not save the collection." };
     }
+    if (!updated?.length) return { ok: false, message: "This collection no longer exists." };
   } else {
     const { data: clash } = await supabase.from("products").select("id").eq("slug", v.slug).maybeSingle();
     if (clash) {

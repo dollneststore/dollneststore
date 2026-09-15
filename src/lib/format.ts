@@ -19,10 +19,10 @@ export function formatPrice(pence: number) {
   return pence % 100 === 0 ? gbpWhole.format(pence / 100) : gbp.format(pence / 100);
 }
 
-/** "199.99" → 19999 (pence). Returns null for anything that is not a valid amount. */
+/** "199.99" → 19999 (pence). Up to £99,999.99. Returns null for anything that is not a valid amount. */
 export function poundsToPence(input: string): number | null {
   const cleaned = input.replace(/[£,\s]/g, "");
-  if (!/^\d{1,6}(\.\d{1,2})?$/.test(cleaned)) return null;
+  if (!/^\d{1,5}(\.\d{1,2})?$/.test(cleaned)) return null;
   return Math.round(Number(cleaned) * 100);
 }
 
@@ -44,8 +44,8 @@ export function slugify(input: string) {
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
+    .slice(0, 80)
+    .replace(/^-+|-+$/g, "");
 }
 
 const categoryLabels: Record<string, string> = {

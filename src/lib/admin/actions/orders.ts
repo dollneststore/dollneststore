@@ -1,6 +1,6 @@
 "use server";
 
-import { refresh, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { adminContext } from "@/lib/admin/context";
@@ -8,7 +8,6 @@ import type { FormState } from "@/lib/admin/form-state";
 import { manualOrderSchema, orderUpdateSchema } from "@/lib/admin/validation";
 
 const field = (formData: FormData, key: string) => String(formData.get(key) ?? "");
-const PAID_STATUSES = ["paid", "processing", "dispatched", "delivered"];
 
 export async function updateOrder(_prev: FormState, formData: FormData): Promise<FormState> {
   const { supabase } = await adminContext();
@@ -25,32 +24,32 @@ export async function updateOrder(_prev: FormState, formData: FormData): Promise
     return { ok: false, message: "Please check the highlighted fields.", fieldErrors: z.flattenError(parsed.error).fieldErrors };
   }
 
-  const { data: current } = await supabase.from("orders").select("paid_at, dispatched_at").eq("id", id.data).maybeSingle();
-  if (!current) return { ok: false, message: "Order not found." };
-
+  // Status, timestamps and restocking happen in one transaction (public.update_order_status).
   const v = parsed.data;
-  const now = new Date().toISOString();
-  const { error } = await supabase
-    .from("orders")
-    .update({
-      status: v.status,
-      carrier: v.carrier,
-      tracking_number: v.trackingNumber,
-      notes: v.notes,
-      paid_at: current.paid_at ?? (PAID_STATUSES.includes(v.status) ? now : null),
-      dispatched_at: current.dispatched_at ?? (["dispatched", "delivered"].includes(v.status) ? now : null),
-    })
-    .eq("id", id.data);
+  const { error } = await supabase.rpc("update_order_status", {
+    p_order_id: id.data,
+    p_status: v.status,
+    p_carrier: v.carrier,
+    p_tracking: v.trackingNumber,
+    p_notes: v.notes,
+  });
   if (error) {
+    if (error.message.includes("order_closed")) {
+      return { ok: false, message: "Cancelled or refunded orders can't be reopened. Record a new order instead." };
+    }
+    if (error.message.includes("order_missing")) return { ok: false, message: "Order not found." };
     console.error("[admin/orders]", error.message);
     return { ok: false, message: "Could not update the order." };
   }
 
-  refresh();
-  return { ok: true, message: "Order updated ♡" };
+  updateTag("products");
+  return {
+    ok: true,
+    message: v.status === "cancelled" || v.status === "refunded" ? "Order updated ♡ Stock has been returned." : "Order updated ♡",
+  };
 }
 
-/** Records an order taken outside the website (WhatsApp, Etsy, Vinted…) and reduces stock. */
+/** Records an order taken outside the website (WhatsApp, Etsy, Vinted…) and reduces stock atomically. */
 export async function createManualOrder(_prev: FormState, formData: FormData): Promise<FormState> {
   const { supabase } = await adminContext();
 
@@ -85,21 +84,8 @@ export async function createManualOrder(_prev: FormState, formData: FormData): P
   const quantityById = new Map<string, number>();
   for (const item of v.items) quantityById.set(item.productId, (quantityById.get(item.productId) ?? 0) + item.quantity);
 
-  const { data: products, error: productError } = await supabase
-    .from("products")
-    .select("id, title, price_pence, stock_qty, product_images(url, position)")
-    .in("id", [...quantityById.keys()]);
-  if (productError || !products || products.length !== quantityById.size) {
-    return { ok: false, message: "One of the selected babies no longer exists." };
-  }
-  for (const p of products) {
-    if (p.stock_qty < quantityById.get(p.id)!) return { ok: false, message: `Only ${p.stock_qty} left of "${p.title}".` };
-  }
-
-  const subtotal = products.reduce((sum, p) => sum + p.price_pence * quantityById.get(p.id)!, 0);
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert({
+  const { data: orderId, error } = await supabase.rpc("create_manual_order", {
+    p_order: {
       channel: v.channel,
       status: v.status,
       customer_name: v.customerName,
@@ -110,47 +96,21 @@ export async function createManualOrder(_prev: FormState, formData: FormData): P
       shipping_city: v.city,
       shipping_county: v.county,
       shipping_postcode: v.postcode,
-      subtotal_pence: subtotal,
       shipping_pence: v.shipping,
-      discount_pence: 0,
-      total_pence: subtotal + v.shipping,
       notes: v.notes,
-      paid_at: v.status === "paid" ? new Date().toISOString() : null,
-    })
-    .select("id")
-    .single();
-  if (orderError) {
-    console.error("[admin/orders]", orderError.message);
+    },
+    p_items: [...quantityById].map(([product_id, quantity]) => ({ product_id, quantity })),
+  });
+
+  if (error) {
+    const stock = error.message.match(/insufficient_stock:(.+)/);
+    if (stock) return { ok: false, message: `"${stock[1].trim()}" is no longer available in that quantity.` };
+    if (error.message.includes("product_missing")) return { ok: false, message: "One of the selected babies no longer exists." };
+    if (error.message.includes("order_too_large")) return { ok: false, message: "This order total is too large." };
+    console.error("[admin/orders]", error.message);
     return { ok: false, message: "Could not create the order." };
   }
 
-  const { error: itemsError } = await supabase.from("order_items").insert(
-    products.map((p) => {
-      const images = [...((p.product_images ?? []) as { url: string; position: number }[])].sort((a, b) => a.position - b.position);
-      return {
-        order_id: order.id,
-        product_id: p.id,
-        title: p.title,
-        unit_price_pence: p.price_pence,
-        quantity: quantityById.get(p.id)!,
-        image_url: images[0]?.url ?? null,
-      };
-    }),
-  );
-  if (itemsError) {
-    await supabase.from("orders").delete().eq("id", order.id);
-    console.error("[admin/orders]", itemsError.message);
-    return { ok: false, message: "Could not save the order items." };
-  }
-
-  for (const p of products) {
-    const left = p.stock_qty - quantityById.get(p.id)!;
-    await supabase
-      .from("products")
-      .update(left === 0 ? { stock_qty: 0, status: "sold_out" } : { stock_qty: left })
-      .eq("id", p.id);
-  }
-
   updateTag("products");
-  redirect(`/admin/orders/${order.id}`);
+  redirect(`/admin/orders/${orderId as string}`);
 }

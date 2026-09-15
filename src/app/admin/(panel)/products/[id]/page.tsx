@@ -34,6 +34,9 @@ async function EditProduct({ params, searchParams }: PageProps<"/admin/products/
         <div>
           <h1 className="font-serif text-4xl font-medium">{product.title}</h1>
           {query.created ? <p className="mt-1 text-sm font-semibold text-sage-deep">Product created ♡</p> : null}
+          {query.imageError ? (
+            <p className="mt-1 text-sm font-semibold text-rose">Some photos couldn&apos;t be attached — please add them again.</p>
+          ) : null}
         </div>
         <div className="flex gap-2">
           {product.status === "active" || product.status === "sold_out" ? (

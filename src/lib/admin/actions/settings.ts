@@ -22,12 +22,14 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
     return { ok: false, message: "Please check the highlighted fields.", fieldErrors: z.flattenError(parsed.error).fieldErrors };
   }
 
+  // Empty strings are stored on purpose: they hide the announcement bar / a social link
+  // (a missing value falls back to the built-in default).
   const { announcement, ...socials } = parsed.data;
   const { error } = await supabase
     .from("site_settings")
     .update({
-      announcement: announcement || null,
-      socials: Object.fromEntries(Object.entries(socials).filter(([, url]) => url)),
+      announcement,
+      socials: Object.fromEntries(Object.entries(socials).map(([key, url]) => [key, url ?? ""])),
     })
     .eq("id", 1);
   if (error) {

@@ -26,25 +26,8 @@ export function GuideForm({ guide }: { guide?: Guide }) {
   const [slug, setSlug] = useState(guide?.slug ?? "");
   const [slugEdited, setSlugEdited] = useState(Boolean(guide));
   const [excerpt, setExcerpt] = useState(guide?.excerpt ?? "");
-  const [cover, setCover] = useState<{ path: string; preview: string } | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const errors = state?.fieldErrors ?? {};
-
-  async function uploadCover(file: File) {
-    const ext = EXTENSIONS[file.type];
-    if (!ext) return setUploadError("Use a JPG, PNG, WebP or AVIF image.");
-    if (file.size > MAX_BYTES) return setUploadError("Images must be 8 MB or smaller.");
-    setUploading(true);
-    setUploadError(null);
-    const path = `guides/${crypto.randomUUID()}.${ext}`;
-    const { error } = await createClient()
-      .storage.from(BUCKET)
-      .upload(path, file, { contentType: file.type, cacheControl: "31536000", upsert: false });
-    setUploading(false);
-    if (error) return setUploadError(error.message);
-    setCover({ path, preview: URL.createObjectURL(file) });
-  }
 
   return (
     <form onSubmit={onSubmit} className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
@@ -120,48 +103,18 @@ export function GuideForm({ guide }: { guide?: Guide }) {
               <option value="published">Published — live</option>
             </select>
           </Field>
-          <Field label="Publish date" htmlFor="publishedAt" error={errors.publishedAt} hint="Leave empty to use today's date when publishing.">
+          <Field
+            label="Publish date"
+            htmlFor="publishedAt"
+            error={errors.publishedAt}
+            hint="Empty or today = live now. A future date schedules the guide (it appears within an hour of 09:00 UK time)."
+          >
             <input id="publishedAt" name="publishedAt" type="date" defaultValue={guide?.publishedAt?.slice(0, 10) ?? ""} className={inputClass} />
           </Field>
         </AdminCard>
 
-        <AdminCard title="Cover image">
-          <input type="hidden" name="coverPath" value={cover?.path ?? ""} />
-          {cover ? (
-            // Blob previews can't go through next/image.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={cover.preview} alt="" className="aspect-[16/9] w-full rounded-xl object-cover" />
-          ) : guide?.coverImageUrl ? (
-            <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-blush">
-              <Image src={guide.coverImageUrl} alt="" fill sizes="300px" className="object-cover" />
-            </div>
-          ) : null}
-          <label className="flex cursor-pointer flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-lilac-line bg-cream px-4 py-6 text-center text-sm hover:border-lilac">
-            <span className="font-bold text-lilac">{uploading ? "Uploading…" : cover || guide?.coverImageUrl ? "Replace image" : "Add cover image"}</span>
-            <span className="text-xs text-muted">16:9 works best · up to 8 MB</span>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/avif"
-              className="sr-only"
-              disabled={uploading}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (file) void uploadCover(file);
-              }}
-            />
-          </label>
-          {guide?.coverImageUrl && !cover ? (
-            <label className="flex items-center gap-2 text-xs font-semibold text-rose">
-              <input type="checkbox" name="removeCover" /> Remove cover image
-            </label>
-          ) : null}
-          {uploadError ? (
-            <p role="alert" className="text-xs font-semibold text-rose">
-              {uploadError}
-            </p>
-          ) : null}
-        </AdminCard>
+        {/* Remount after the saved cover changes so a finished upload isn't treated as pending. */}
+        <CoverField key={guide?.coverImageUrl ?? "none"} currentUrl={guide?.coverImageUrl ?? null} onUploading={setUploading} />
 
         <FormMessage state={state} />
         <button type="submit" disabled={pending || uploading} className={adminButton}>
@@ -169,5 +122,68 @@ export function GuideForm({ guide }: { guide?: Guide }) {
         </button>
       </div>
     </form>
+  );
+}
+
+function CoverField({ currentUrl, onUploading }: { currentUrl: string | null; onUploading: (busy: boolean) => void }) {
+  const [cover, setCover] = useState<{ path: string; preview: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function upload(file: File) {
+    const ext = EXTENSIONS[file.type];
+    if (!ext) return setError("Use a JPG, PNG, WebP or AVIF image.");
+    if (file.size > MAX_BYTES) return setError("Images must be 8 MB or smaller.");
+    setBusy(true);
+    onUploading(true);
+    setError(null);
+    const path = `guides/${crypto.randomUUID()}.${ext}`;
+    const { error: uploadError } = await createClient()
+      .storage.from(BUCKET)
+      .upload(path, file, { contentType: file.type, cacheControl: "31536000", upsert: false });
+    setBusy(false);
+    onUploading(false);
+    if (uploadError) return setError(uploadError.message);
+    setCover({ path, preview: URL.createObjectURL(file) });
+  }
+
+  return (
+    <AdminCard title="Cover image">
+      <input type="hidden" name="coverPath" value={cover?.path ?? ""} />
+      {cover ? (
+        // Blob previews can't go through next/image.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={cover.preview} alt="" className="aspect-[16/9] w-full rounded-xl object-cover" />
+      ) : currentUrl ? (
+        <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-blush">
+          <Image src={currentUrl} alt="" fill sizes="300px" className="object-cover" />
+        </div>
+      ) : null}
+      <label className="flex cursor-pointer flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-lilac-line bg-cream px-4 py-6 text-center text-sm hover:border-lilac">
+        <span className="font-bold text-lilac">{busy ? "Uploading…" : cover || currentUrl ? "Replace image" : "Add cover image"}</span>
+        <span className="text-xs text-muted">16:9 works best · up to 8 MB</span>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          className="sr-only"
+          disabled={busy}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (file) void upload(file);
+          }}
+        />
+      </label>
+      {currentUrl && !cover ? (
+        <label className="flex items-center gap-2 text-xs font-semibold text-rose">
+          <input type="checkbox" name="removeCover" /> Remove cover image
+        </label>
+      ) : null}
+      {error ? (
+        <p role="alert" className="text-xs font-semibold text-rose">
+          {error}
+        </p>
+      ) : null}
+    </AdminCard>
   );
 }

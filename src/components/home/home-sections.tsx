@@ -272,22 +272,30 @@ export function SocialSection({ images, socials }: { images: string[]; socials: 
           Follow along <em className="text-lilac">@dollneststore</em>
         </h2>
         <div className="flex flex-wrap gap-2 text-[13px] font-bold">
-          <a href={socials.tiktok} target="_blank" rel="noopener noreferrer" className="rounded-[20px] bg-cocoa px-4 py-2.5 text-white">
-            TikTok
-          </a>
-          <a href={socials.instagram} target="_blank" rel="noopener noreferrer" className="rounded-[20px] border-[1.5px] border-[#ead9e2] bg-white px-4 py-2.5">
-            Instagram
-          </a>
-          <a href={socials.etsy} target="_blank" rel="noopener noreferrer" className="rounded-[20px] border-[1.5px] border-[#ead9e2] bg-white px-4 py-2.5">
-            Etsy
-          </a>
+          {[
+            { href: socials.tiktok, label: "TikTok" },
+            { href: socials.instagram, label: "Instagram" },
+            { href: socials.etsy, label: "Etsy" },
+          ]
+            .filter((link) => link.href)
+            .map((link, index) => (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`rounded-[20px] px-4 py-2.5 ${index === 0 ? "bg-cocoa text-white" : "border-[1.5px] border-[#ead9e2] bg-white"}`}
+              >
+                {link.label}
+              </a>
+            ))}
         </div>
       </div>
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
         {images.map((src, i) => (
           <li key={src}>
             <a
-              href={socials.tiktok}
+              href={socials.tiktok || socials.instagram || "/reborn-dolls"}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Watch Dollnest on TikTok"

@@ -1,7 +1,8 @@
-import { BottomNav } from "@/components/site/bottom-nav";
+import { Suspense } from "react";
 import { AnnouncementBar } from "@/components/site/announcement-bar";
+import { BottomNav, BottomNavShell } from "@/components/site/bottom-nav";
 import { Footer } from "@/components/site/footer";
-import { Header } from "@/components/site/header";
+import { Header, HeaderShell } from "@/components/site/header";
 import { WhatsAppButton } from "@/components/site/whatsapp-button";
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
@@ -14,12 +15,17 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
         Skip to content
       </a>
       <AnnouncementBar />
-      <Header />
+      {/* usePathname suspends on routes with params not known at build time. */}
+      <Suspense fallback={<HeaderShell pathname={null} />}>
+        <Header />
+      </Suspense>
       <main id="main" className="flex-1">
         {children}
       </main>
       <Footer />
-      <BottomNav />
+      <Suspense fallback={<BottomNavShell pathname={null} />}>
+        <BottomNav />
+      </Suspense>
       <WhatsAppButton />
     </div>
   );

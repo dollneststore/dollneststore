@@ -17,6 +17,7 @@ export async function createReview(_prev: FormState, formData: FormData): Promis
     source: field(formData, "source"),
     reviewedAt: field(formData, "reviewedAt"),
     imageUrl: field(formData, "imageUrl"),
+    productId: field(formData, "productId"),
     isPublished: formData.get("isPublished") === "on",
   });
   if (!parsed.success) {
@@ -31,11 +32,12 @@ export async function createReview(_prev: FormState, formData: FormData): Promis
     source: v.source,
     reviewed_at: v.reviewedAt,
     image_url: v.imageUrl,
+    product_id: v.productId,
     is_published: v.isPublished,
   });
   if (error) {
     console.error("[admin/reviews]", error.message);
-    return { ok: false, message: "Could not save the review." };
+    return { ok: false, message: error.code === "23503" ? "That product no longer exists." : "Could not save the review." };
   }
 
   updateTag("reviews");

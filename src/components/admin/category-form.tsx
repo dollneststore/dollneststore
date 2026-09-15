@@ -13,6 +13,7 @@ export function CategoryForm({ category }: { category?: Category }) {
   const { state, pending, onSubmit } = useFormAction(saveCategory);
   const [name, setName] = useState(category?.name ?? "");
   const [slug, setSlug] = useState(category?.slug ?? "");
+  const [slugEdited, setSlugEdited] = useState(Boolean(category));
   const errors = state?.fieldErrors ?? {};
   const defaults = categoryDefaults({ slug: slug || "new", name: name || "New collection" });
 
@@ -31,7 +32,7 @@ export function CategoryForm({ category }: { category?: Category }) {
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
-                if (!category) setSlug(slugify(e.target.value));
+                if (!slugEdited) setSlug(slugify(e.target.value));
               }}
               className={inputClass}
             />
@@ -48,7 +49,10 @@ export function CategoryForm({ category }: { category?: Category }) {
               required
               readOnly={Boolean(category)}
               value={slug}
-              onChange={(e) => setSlug(e.target.value.toLowerCase())}
+              onChange={(e) => {
+                setSlugEdited(true);
+                setSlug(e.target.value.toLowerCase());
+              }}
               className={inputClass}
             />
           </Field>

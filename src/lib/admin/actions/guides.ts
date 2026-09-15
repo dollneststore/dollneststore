@@ -12,6 +12,20 @@ const COVER_PATH = /^guides\/[0-9a-f-]{36}\.(jpg|png|webp|avif)$/;
 const isUuid = (value: string) => z.uuid().safeParse(value).success;
 const field = (formData: FormData, key: string) => String(formData.get(key) ?? "");
 
+/**
+ * Keeps an existing timestamp when the date wasn't changed, publishes "today" immediately,
+ * and schedules other dates for 09:00 UTC.
+ */
+function resolvePublishedAt(submittedDate: string | null, existing: string | null, status: string) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (submittedDate) {
+    if (existing && existing.slice(0, 10) === submittedDate) return existing;
+    if (submittedDate === today) return new Date().toISOString();
+    return new Date(`${submittedDate}T09:00:00Z`).toISOString();
+  }
+  return existing ?? (status === "published" ? new Date().toISOString() : null);
+}
+
 export async function saveGuide(_prev: FormState, formData: FormData): Promise<FormState> {
   const { supabase } = await adminContext();
   const rawId = field(formData, "id");
@@ -39,10 +53,7 @@ export async function saveGuide(_prev: FormState, formData: FormData): Promise<F
     existing = data;
   }
 
-  const publishedAt = v.publishedAt
-    ? new Date(`${v.publishedAt}T09:00:00Z`).toISOString()
-    : (existing?.published_at ?? (v.status === "published" ? new Date().toISOString() : null));
-
+  const publishedAt = resolvePublishedAt(v.publishedAt, existing?.published_at ?? null, v.status);
   const row: Record<string, string | null> = {
     title: v.title,
     slug: v.slug,
@@ -56,7 +67,7 @@ export async function saveGuide(_prev: FormState, formData: FormData): Promise<F
 
   const coverPath = field(formData, "coverPath");
   let replacedCover = false;
-  if (COVER_PATH.test(coverPath)) {
+  if (COVER_PATH.test(coverPath) && coverPath !== existing?.cover_storage_path) {
     row.cover_storage_path = coverPath;
     row.cover_image_url = supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(coverPath).data.publicUrl;
     replacedCover = true;
@@ -76,13 +87,18 @@ export async function saveGuide(_prev: FormState, formData: FormData): Promise<F
     id = data.id;
   }
 
-  if (replacedCover && existing?.cover_storage_path && existing.cover_storage_path !== coverPath) {
+  if (replacedCover && existing?.cover_storage_path) {
     await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove([existing.cover_storage_path]);
   }
 
   updateTag("guides");
   if (!guideId) redirect(`/admin/guides/${id}?created=1`);
-  return { ok: true, message: v.status === "published" ? "Saved — the guide is live ♡" : "Draft saved ♡" };
+
+  const scheduled = v.status === "published" && publishedAt && new Date(publishedAt) > new Date();
+  return {
+    ok: true,
+    message: v.status !== "published" ? "Draft saved ♡" : scheduled ? "Saved — the guide will go live on its publish date ♡" : "Saved — the guide is live ♡",
+  };
 }
 
 function guideError(error: { code?: string; message: string }): FormState {

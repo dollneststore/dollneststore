@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { AdminNav, AdminNavLinks } from "@/components/admin/admin-nav";
+import { LoadingBlock } from "@/components/admin/form-ui";
 import { signOut } from "@/lib/admin/actions/auth";
-import { getAdmin } from "@/lib/auth";
+import { getAdmin, requireAdmin } from "@/lib/auth";
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -36,9 +37,19 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
           </form>
         </div>
       </aside>
-      <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-10">{children}</main>
+      <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-10">
+        <Suspense fallback={<LoadingBlock />}>
+          <AdminGate>{children}</AdminGate>
+        </Suspense>
+      </main>
     </div>
   );
+}
+
+/** Panel chrome is only shown to verified admins (pages and actions re-check on their own). */
+async function AdminGate({ children }: { children: React.ReactNode }) {
+  await requireAdmin();
+  return children;
 }
 
 async function AdminEmail() {

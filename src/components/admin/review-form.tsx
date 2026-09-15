@@ -6,7 +6,7 @@ import { reviewSources } from "@/lib/types";
 import { adminButton, AdminCard, Field, FormMessage, inputClass } from "./form-ui";
 import { useFormAction } from "./use-form-action";
 
-export function ReviewForm() {
+export function ReviewForm({ products }: { products: { id: string; title: string }[] }) {
   const { state, pending, onSubmit } = useFormAction(createReview);
   const formRef = useRef<HTMLFormElement>(null);
   const errors = state?.fieldErrors ?? {};
@@ -44,11 +44,26 @@ export function ReviewForm() {
         <Field label="Review" htmlFor="body" error={errors.body}>
           <textarea id="body" name="body" required rows={3} maxLength={2000} className={inputClass} />
         </Field>
+        <Field
+          label="Baby this review is about"
+          htmlFor="productId"
+          error={errors.productId}
+          hint="Linked reviews appear on that product page and can show as stars in Google."
+        >
+          <select id="productId" name="productId" defaultValue="" className={inputClass}>
+            <option value="">Shop review (not linked to a baby)</option>
+            {products.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.title}
+              </option>
+            ))}
+          </select>
+        </Field>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Date" htmlFor="reviewedAt" error={errors.reviewedAt}>
             <input id="reviewedAt" name="reviewedAt" type="date" className={inputClass} />
           </Field>
-          <Field label="Photo URL (optional)" htmlFor="imageUrl" error={errors.imageUrl}>
+          <Field label="Photo URL (optional)" htmlFor="imageUrl" error={errors.imageUrl} hint="A link from Etsy or your Supabase storage.">
             <input id="imageUrl" name="imageUrl" type="url" placeholder="https://" className={inputClass} />
           </Field>
         </div>

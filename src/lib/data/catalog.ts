@@ -42,9 +42,11 @@ export async function getShopProducts(): Promise<Product[]> {
   return (data as ProductRow[]).map(mapProduct);
 }
 
+export const isForSale = (p: Product) => p.status === "active" && p.stockQty > 0;
+
 export async function getFeaturedProducts(limit = 4): Promise<Product[]> {
   const products = await getShopProducts();
-  const available = products.filter((p) => p.status === "active");
+  const available = products.filter(isForSale);
   const featured = available.filter((p) => p.isFeatured);
   const rest = available.filter((p) => !p.isFeatured);
   return [...featured, ...rest].slice(0, limit);
@@ -116,14 +118,30 @@ export async function getProductReviewStats(): Promise<Record<string, ProductRev
   return stats;
 }
 
+/**
+ * A value that was never saved falls back to the built-in default;
+ * an explicitly saved empty string means "hide it".
+ */
+export function resolveSettings(data: { announcement: string | null; socials: unknown; google_site_verification?: string | null } | null): SiteSettings {
+  if (!data) return { announcement: defaultAnnouncement, socials: defaultSocials, googleSiteVerification: null };
+  const saved = (data.socials ?? {}) as Partial<Record<keyof Socials, string>>;
+  const socials = Object.fromEntries(
+    Object.entries(defaultSocials).map(([key, fallback]) => [key, key in saved ? (saved[key as keyof Socials] ?? "") : fallback]),
+  ) as Socials;
+  return {
+    announcement: data.announcement ?? defaultAnnouncement,
+    socials,
+    googleSiteVerification: data.google_site_verification ?? null,
+  };
+}
+
 export async function getSiteSettings(): Promise<SiteSettings> {
   "use cache";
   cacheLife("days");
   cacheTag("settings");
 
-  const fallback: SiteSettings = { announcement: defaultAnnouncement, socials: defaultSocials, googleSiteVerification: null };
   const db = createPublicClient();
-  if (!db) return fallback;
+  if (!db) return resolveSettings(null);
 
   const { data, error } = await db
     .from("site_settings")
@@ -131,17 +149,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     .eq("id", 1)
     .maybeSingle();
   if (error) throw new Error(`Could not load settings: ${error.message}`);
-  if (!data) return fallback;
-
-  const saved = (data.socials ?? {}) as Partial<Socials>;
-  const socials = Object.fromEntries(
-    Object.entries(defaultSocials).map(([key, value]) => [key, saved[key as keyof Socials] || value]),
-  ) as Socials;
-  return {
-    announcement: data.announcement || defaultAnnouncement,
-    socials,
-    googleSiteVerification: data.google_site_verification ?? null,
-  };
+  return resolveSettings(data);
 }
 
 async function getPageSeoMap(): Promise<Record<string, PageSeo>> {
@@ -174,6 +182,7 @@ export async function getGuides(): Promise<Guide[]> {
     .from("posts")
     .select(GUIDE_COLUMNS)
     .eq("status", "published")
+    .lte("published_at", new Date().toISOString())
     .order("published_at", { ascending: false });
   if (error) throw new Error(`Could not load guides: ${error.message}`);
   return (data as GuideRow[]).map(mapGuide);

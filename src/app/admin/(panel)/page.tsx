@@ -33,23 +33,35 @@ export default function DashboardPage() {
 
 async function Dashboard() {
   const stats = await getDashboardStats();
-  const tiles = [
-    { label: "Open orders", value: String(stats.openOrders), href: "/admin/orders?status=paid" },
-    { label: "Revenue · 30 days", value: formatPrice(stats.revenue30dPence), href: "/admin/orders" },
-    { label: "Orders · 30 days", value: String(stats.orders30d), href: "/admin/orders" },
-    { label: "Babies for sale", value: String(stats.activeProducts), href: "/admin/products" },
-    { label: "Newsletter", value: String(stats.subscribers), href: "/admin/settings" },
+  const tiles: { label: string; value: string; href?: string }[] = [
+    { label: "Open orders", value: String(stats.openOrders), href: "/admin/orders" },
+    { label: "Paid · last 30 days", value: formatPrice(stats.revenue30dPence), href: "/admin/orders" },
+    { label: "Paid orders · 30 days", value: String(stats.orders30d), href: "/admin/orders" },
+    { label: "Babies in stock", value: String(stats.activeProducts), href: "/admin/products" },
+    { label: "Newsletter subscribers", value: String(stats.subscribers) },
   ];
+  const tileClass = "rounded-[20px] border border-line bg-white p-5";
 
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-        {tiles.map((tile) => (
-          <Link key={tile.label} href={tile.href} className="rounded-[20px] border border-line bg-white p-5 transition-colors hover:border-lilac">
-            <p className="text-xs font-bold uppercase tracking-[.1em] text-muted">{tile.label}</p>
-            <p className="mt-2 text-3xl font-bold text-lilac">{tile.value}</p>
-          </Link>
-        ))}
+        {tiles.map((tile) => {
+          const content = (
+            <>
+              <p className="text-xs font-bold uppercase tracking-[.1em] text-muted">{tile.label}</p>
+              <p className="mt-2 text-3xl font-bold text-lilac">{tile.value}</p>
+            </>
+          );
+          return tile.href ? (
+            <Link key={tile.label} href={tile.href} className={`${tileClass} transition-colors hover:border-lilac`}>
+              {content}
+            </Link>
+          ) : (
+            <div key={tile.label} className={tileClass}>
+              {content}
+            </div>
+          );
+        })}
       </div>
 
       <AdminCard title="Latest orders">

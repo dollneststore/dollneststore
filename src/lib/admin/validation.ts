@@ -38,9 +38,14 @@ const optionalHttpsUrl = z
   .union([z.literal(""), z.url({ protocol: /^https$/, error: "Use a full https:// link" })])
   .transform((v) => v || null);
 
-function allowedImageHosts() {
+/** Only hosts that next/image and the CSP allow: Etsy's CDN and this project's public Supabase storage. */
+function isAllowedImageUrl(value: string) {
+  const url = new URL(value);
+  if (url.hostname === "i.etsystatic.com") return true;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return ["i.etsystatic.com", ...(supabaseUrl ? [new URL(supabaseUrl).hostname] : [])];
+  return Boolean(
+    supabaseUrl && url.hostname === new URL(supabaseUrl).hostname && url.pathname.startsWith("/storage/v1/object/public/"),
+  );
 }
 
 const optionalImageUrl = z
@@ -48,9 +53,11 @@ const optionalImageUrl = z
     z.literal(""),
     z
       .url({ protocol: /^https$/, error: "Use a full https:// link" })
-      .refine((v) => allowedImageHosts().includes(new URL(v).hostname), "Use a photo URL from your product images (Supabase or Etsy)"),
+      .refine(isAllowedImageUrl, "Use a photo link from your product images (Supabase storage or Etsy)"),
   ])
   .transform((v) => v || null);
+
+const optionalUuid = z.union([z.literal(""), z.uuid()]).transform((v) => v || null);
 
 const seoFields = {
   seoTitle: optionalText(70),
@@ -156,7 +163,8 @@ export const reviewSchema = z.object({
     .trim()
     .regex(/^(\d{4}-\d{2}-\d{2})?$/, "Use a valid date")
     .transform((v) => v || null),
-  imageUrl: optionalHttpsUrl,
+  imageUrl: optionalImageUrl,
+  productId: optionalUuid,
   isPublished: z.boolean(),
 });
 

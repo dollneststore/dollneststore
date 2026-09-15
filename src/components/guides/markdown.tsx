@@ -6,7 +6,8 @@ import type { ReactNode } from "react";
 // Output is React elements only (never raw HTML), so admin content can't inject markup or scripts.
 
 function safeHref(href: string) {
-  return /^(https:\/\/|\/(?!\/)|mailto:)/.test(href) ? href : null;
+  // Relative links must not start with "//" or "/\" (browsers treat both as another host).
+  return /^(https:\/\/|\/(?![/\\])|mailto:)/.test(href) ? href : null;
 }
 
 function renderInline(text: string, keyPrefix: string): ReactNode[] {

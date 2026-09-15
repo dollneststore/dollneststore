@@ -11,7 +11,7 @@ import {
 import { JsonLd } from "@/components/site/json-ld";
 import { container } from "@/components/ui/styles";
 import { faqs } from "@/lib/content/faq";
-import { getCategories, getFeaturedProducts, getReviews, getShopProducts, getSiteSettings } from "@/lib/data/catalog";
+import { getCategories, getFeaturedProducts, getReviews, getShopProducts, getSiteSettings, isForSale } from "@/lib/data/catalog";
 import { heroImage, seedSocialImages } from "@/lib/data/seed";
 import { staticPageMetadata } from "@/lib/seo";
 import { shopPath } from "@/lib/seo-defaults";
@@ -38,7 +38,7 @@ export default async function HomePage() {
 
   const fromPrices: Record<string, number> = {};
   for (const p of products) {
-    if (p.status !== "active" || !p.categorySlug) continue;
+    if (!isForSale(p) || !p.categorySlug) continue;
     fromPrices[p.categorySlug] = Math.min(fromPrices[p.categorySlug] ?? Infinity, p.pricePence);
   }
 
@@ -60,7 +60,7 @@ export default async function HomePage() {
       addressCountry: "GB",
     },
     areaServed: "GB",
-    sameAs: Object.values(settings.socials),
+    sameAs: Object.values(settings.socials).filter(Boolean),
   };
 
   const website = {

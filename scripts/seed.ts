@@ -4,7 +4,8 @@
  *   pnpm db:seed
  *
  * Needs NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY in .env.local.
- * Safe to re-run: rows are upserted by slug / Etsy listing id / external id.
+ * Safe to re-run: it only inserts rows that don't exist yet and never overwrites
+ * admin edits, stock or sold status.
  */
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
@@ -31,40 +32,46 @@ async function main() {
       tint: c.tint,
       sort_order: c.sortOrder,
     })),
-    { onConflict: "slug" },
+    { onConflict: "slug", ignoreDuplicates: true },
   );
   if (categoryError) throw categoryError;
-  console.log(`✓ ${seedCategories.length} categories`);
+  console.log(`✓ categories (existing ones left untouched)`);
+
+  const { data: existing, error: existingError } = await db
+    .from("products")
+    .select("etsy_listing_id, slug")
+    .or(`etsy_listing_id.in.(${seedProducts.map((p) => p.etsyListingId).join(",")}),slug.in.(${seedProducts.map((p) => p.slug).join(",")})`);
+  if (existingError) throw existingError;
+  const taken = new Set((existing ?? []).flatMap((r) => [r.etsy_listing_id, r.slug]));
 
   for (const p of seedProducts) {
+    if (taken.has(p.etsyListingId) || taken.has(p.slug)) {
+      console.log(`– ${p.title} already exists, skipped`);
+      continue;
+    }
     const { data, error } = await db
       .from("products")
-      .upsert(
-        {
-          slug: p.slug,
-          title: p.title,
-          description: p.description,
-          price_pence: p.pricePence,
-          compare_at_price_pence: p.compareAtPricePence,
-          category_slug: p.categorySlug,
-          gender: p.gender,
-          length_in: p.lengthIn,
-          weight_lbs: p.weightLbs,
-          stock_qty: p.stockQty,
-          status: p.status,
-          is_featured: p.isFeatured,
-          badge: p.badge,
-          sort_order: p.sortOrder,
-          etsy_listing_id: p.etsyListingId,
-        },
-        { onConflict: "etsy_listing_id" },
-      )
+      .insert({
+        slug: p.slug,
+        title: p.title,
+        description: p.description,
+        price_pence: p.pricePence,
+        compare_at_price_pence: p.compareAtPricePence,
+        category_slug: p.categorySlug,
+        gender: p.gender,
+        length_in: p.lengthIn,
+        weight_lbs: p.weightLbs,
+        stock_qty: p.stockQty,
+        status: p.status,
+        is_featured: p.isFeatured,
+        badge: p.badge,
+        sort_order: p.sortOrder,
+        etsy_listing_id: p.etsyListingId,
+      })
       .select("id")
       .single();
     if (error) throw error;
 
-    // Replace hotlinked images only; images uploaded through the admin panel stay.
-    await db.from("product_images").delete().eq("product_id", data.id).is("storage_path", null);
     const { error: imageError } = await db.from("product_images").insert(
       p.images.map((img, position) => ({ product_id: data.id, url: img.url, alt: img.alt, position })),
     );
@@ -83,10 +90,10 @@ async function main() {
       reviewed_at: r.reviewedAt,
       is_published: true,
     })),
-    { onConflict: "external_id" },
+    { onConflict: "external_id", ignoreDuplicates: true },
   );
   if (reviewError) throw reviewError;
-  console.log(`✓ ${seedReviews.length} reviews`);
+  console.log(`✓ reviews`);
 }
 
 main().catch((error) => {

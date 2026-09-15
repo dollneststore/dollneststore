@@ -50,9 +50,11 @@ export function CheckoutView({ etsyUrl }: { etsyUrl: string }) {
             <WhatsAppIcon className="size-5" />
             Send order on WhatsApp
           </a>
-          <a href={etsyUrl} target="_blank" rel="noopener noreferrer" className={buttonOutline}>
-            Buy on Etsy
-          </a>
+          {etsyUrl ? (
+            <a href={etsyUrl} target="_blank" rel="noopener noreferrer" className={buttonOutline}>
+              Buy on Etsy
+            </a>
+          ) : null}
         </div>
       </section>
 

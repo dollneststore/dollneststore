@@ -83,8 +83,9 @@ export async function saveProduct(_prev: FormState, formData: FormData): Promise
 
   let id: string;
   if (productId) {
-    const { error } = await supabase.from("products").update(row).eq("id", productId);
+    const { data, error } = await supabase.from("products").update(row).eq("id", productId).select("id");
     if (error) return dbError(error);
+    if (!data?.length) return { ok: false, message: "This product no longer exists." };
     id = productId;
   } else {
     const { data, error } = await supabase.from("products").insert(row).select("id").single();
@@ -127,30 +128,39 @@ export async function saveProduct(_prev: FormState, formData: FormData): Promise
   try {
     const raw: unknown = JSON.parse(field(formData, "newImages") || "[]");
     if (Array.isArray(raw)) {
-      newPaths = raw.filter((p): p is string => typeof p === "string" && STORAGE_PATH.test(p)).slice(0, 20);
+      newPaths = [...new Set(raw.filter((p): p is string => typeof p === "string" && STORAGE_PATH.test(p)))].slice(0, 20);
     }
   } catch {
     newPaths = [];
   }
   if (newPaths.length) {
-    const { data: last } = await supabase
+    // Skip files already attached (e.g. the form was submitted twice).
+    const { data: existing } = await supabase
       .from("product_images")
-      .select("position")
+      .select("storage_path, position")
       .eq("product_id", id)
-      .order("position", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const start = (last?.position ?? -1) + 1;
-    const { error } = await supabase.from("product_images").insert(
-      newPaths.map((path, index) => ({
-        product_id: id,
-        storage_path: path,
-        url: supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl,
-        alt: v.title,
-        position: start + index,
-      })),
-    );
-    if (error) return dbError(error);
+      .order("position", { ascending: false });
+    const attached = new Set((existing ?? []).map((r) => r.storage_path));
+    newPaths = newPaths.filter((path) => !attached.has(path));
+    const start = (existing?.[0]?.position ?? -1) + 1;
+
+    if (newPaths.length) {
+      const { error } = await supabase.from("product_images").insert(
+        newPaths.map((path, index) => ({
+          product_id: id,
+          storage_path: path,
+          url: supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl,
+          alt: v.title,
+          position: start + index,
+        })),
+      );
+      if (error) {
+        updateTag("products");
+        // The product exists now: continue on its edit page rather than risking a duplicate on resubmit.
+        if (!productId) redirect(`/admin/products/${id}?created=1&imageError=1`);
+        return dbError(error);
+      }
+    }
   }
 
   updateTag("products");

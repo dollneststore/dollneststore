@@ -74,7 +74,8 @@ export function ProductForm({ product, categories }: { product?: Product; catego
         </AdminCard>
 
         <AdminCard title="Photos">
-          <ImageUploader images={product?.images ?? []} />
+          {/* Remount when saved images change so pending uploads aren't submitted twice. */}
+          <ImageUploader key={product?.images.map((img) => img.id).join(",") ?? "new"} images={product?.images ?? []} />
         </AdminCard>
 
         <AdminCard title="Baby details">

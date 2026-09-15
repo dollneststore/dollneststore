@@ -44,7 +44,9 @@ export default async function ContactPage() {
               ["Etsy", socials.etsy],
               ["Vinted", socials.vinted],
               ["eBay", socials.ebay],
-            ].map(([label, href]) => (
+            ]
+              .filter(([, href]) => href)
+              .map(([label, href]) => (
               <li key={label}>
                 <a href={href} target="_blank" rel="noopener noreferrer" className="block rounded-full border border-line px-3.5 py-2 hover:border-lilac hover:text-lilac">
                   {label}

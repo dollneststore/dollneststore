@@ -16,7 +16,7 @@ export async function Footer() {
     { href: socials.etsy, label: "Etsy", short: "Et", bg: "bg-peach" },
     { href: socials.vinted, label: "Vinted", short: "V", bg: "bg-sage" },
     { href: socials.ebay, label: "eBay", short: "eB", bg: "bg-sky" },
-  ];
+  ].filter((s) => s.href);
 
   return (
     <footer className="border-t border-line bg-white">

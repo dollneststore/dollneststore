@@ -20,11 +20,17 @@ const navLinks = [
 
 const iconButton = "relative grid size-10 place-items-center rounded-full transition-colors hover:bg-blush";
 
+/** Header with the active link highlighted. Needs a Suspense boundary (usePathname on dynamic routes). */
 export function Header() {
-  const pathname = usePathname();
+  return <HeaderShell pathname={usePathname()} />;
+}
+
+/** Also used as the Suspense fallback, without an active link. */
+export function HeaderShell({ pathname }: { pathname: string | null }) {
   const { count } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
-  const isActive = (href: string) => (href === "/" ? pathname === "/" : !href.includes("#") && pathname.startsWith(href));
+  const isActive = (href: string) =>
+    pathname !== null && (href === "/" ? pathname === "/" : !href.includes("#") && pathname.startsWith(href));
   const closeMenu = () => setMenuOpen(false);
 
   return (

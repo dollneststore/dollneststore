@@ -39,9 +39,8 @@ export async function proxy(request: NextRequest) {
     loginUrl.searchParams.set("next", `${pathname}${search}`);
     return NextResponse.redirect(loginUrl);
   }
-  if (signedIn && isLoginPage) {
-    return NextResponse.redirect(new URL("/admin", request.url));
-  }
+  // Signed-in users may still open the login page: a session that isn't (or is no
+  // longer) an admin gets sent there by requireAdmin(), so redirecting back would loop.
 
   response.headers.set("X-Robots-Tag", "noindex, nofollow");
   return response;

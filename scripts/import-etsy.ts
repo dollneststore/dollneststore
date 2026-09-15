@@ -8,6 +8,7 @@
  *   pnpm import:etsy --dry-run       only write data/etsy-export.json
  *
  * Needs ETSY_API_KEY (+ ETSY_SHARED_SECRET), NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY in .env.local.
+ * Photos uploaded through the admin panel are never removed.
  */
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
@@ -134,42 +135,57 @@ async function main() {
 
   for (const [index, listing] of listings.entries()) {
     const listingId = String(listing.listing_id);
-    const alreadyImported = productIdByListing.has(listingId);
-    if (alreadyImported && !UPDATE) continue;
+    const existingId = productIdByListing.get(listingId);
+    if (existingId && !UPDATE) continue;
 
     const title = decode(listing.title).slice(0, 140);
     const description = decode(listing.description);
-    const text = `${title} ${description}`;
-    const row = {
+    const common = {
       title,
       description,
       price_pence: Math.round((listing.price.amount / listing.price.divisor) * 100),
       stock_qty: Math.max(0, listing.quantity),
-      etsy_listing_id: listingId,
-      ...(alreadyImported
-        ? {}
-        : {
-            slug: `${slugify(title).split("-").slice(0, 6).join("-")}-${listingId.slice(-4)}`,
-            category_slug: guessCategory(text),
-            gender: guessGender(title),
-            length_in: spec(/(\d{1,2})\s*(?:inch|in\b|")/i, description),
-            weight_lbs: spec(/(\d{1,2}(?:\.\d)?)\s*lbs?/i, description),
-            status: "active",
-            sort_order: 100 + index,
-          }),
     };
 
-    const { data: saved, error } = await db
-      .from("products")
-      .upsert(row, { onConflict: "etsy_listing_id" })
-      .select("id")
-      .single();
-    if (error) throw error;
-    productIdByListing.set(listingId, saved.id);
+    let productId: string;
+    if (existingId) {
+      // Update only Etsy-owned fields; slug, collection, badge and SEO stay as edited in the admin.
+      const { error } = await db.from("products").update(common).eq("id", existingId);
+      if (error) throw error;
+      productId = existingId;
+    } else {
+      const base = slugify(title).split("-").slice(0, 6).join("-") || "reborn-doll";
+      const { data, error } = await db
+        .from("products")
+        .insert({
+          ...common,
+          etsy_listing_id: listingId,
+          slug: `${base}-${listingId.slice(-4)}`,
+          category_slug: guessCategory(`${title} ${description}`),
+          gender: guessGender(title),
+          length_in: spec(/(\d{1,2})\s*(?:inch|in\b|")/i, description),
+          weight_lbs: spec(/(\d{1,2}(?:\.\d)?)\s*lbs?/i, description),
+          status: "active",
+          sort_order: 100 + index,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      productId = data.id;
+      productIdByListing.set(listingId, productId);
+    }
+
+    // Replace only images that came from Etsy (hotlinked or copied with an etsy- prefix).
+    const { data: oldEtsyImages } = await db
+      .from("product_images")
+      .select("id, storage_path")
+      .eq("product_id", productId)
+      .or("storage_path.is.null,storage_path.like.products/etsy-%");
+    if (oldEtsyImages?.length) {
+      await db.from("product_images").delete().in("id", oldEtsyImages.map((img) => img.id));
+    }
 
     const images = [...(listing.images ?? [])].sort((a, b) => a.rank - b.rank);
-    await db.from("product_images").delete().eq("product_id", saved.id).is("storage_path", null);
-
     const imageRows = [];
     for (const [position, image] of images.entries()) {
       let imageUrl = image.url_fullxfull;
@@ -185,7 +201,7 @@ async function main() {
         imageUrl = db.storage.from(BUCKET).getPublicUrl(storagePath).data.publicUrl;
       }
       imageRows.push({
-        product_id: saved.id,
+        product_id: productId,
         url: imageUrl,
         storage_path: storagePath,
         alt: image.alt_text || title,
@@ -193,11 +209,10 @@ async function main() {
       });
     }
     if (imageRows.length) {
-      if (COPY_IMAGES) await db.from("product_images").delete().eq("product_id", saved.id);
       const { error: imageError } = await db.from("product_images").insert(imageRows);
       if (imageError) throw imageError;
     }
-    console.log(`${alreadyImported ? "↻" : "✓"} ${title} (${imageRows.length} images)`);
+    console.log(`${existingId ? "↻" : "✓"} ${title} (${imageRows.length} images)`);
   }
 
   const reviewRows = reviews

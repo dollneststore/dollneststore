@@ -20,7 +20,7 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
   return (
     <form onSubmit={onSubmit} className="flex max-w-2xl flex-col gap-6">
       <AdminCard title="Announcement bar">
-        <Field label="Message" htmlFor="announcement" error={errors.announcement} hint="Shown at the very top of every page. Max 160 characters.">
+        <Field label="Message" htmlFor="announcement" error={errors.announcement} hint="Shown at the very top of every page. Max 160 characters. Leave empty to hide the bar.">
           <input id="announcement" name="announcement" maxLength={160} defaultValue={settings.announcement} className={inputClass} />
         </Field>
       </AdminCard>

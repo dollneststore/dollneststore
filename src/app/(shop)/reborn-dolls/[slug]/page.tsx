@@ -11,7 +11,9 @@ import { categoryPath, categorySeo, productPath, productSeo } from "@/lib/seo-de
 
 export async function generateStaticParams() {
   const [categories, products] = await Promise.all([getCategories(), getShopProducts()]);
-  return [...categories.map((c) => ({ slug: c.slug })), ...products.map((p) => ({ slug: p.slug }))];
+  const params = [...categories.map((c) => ({ slug: c.slug })), ...products.map((p) => ({ slug: p.slug }))];
+  // Cache Components needs at least one param to validate the route at build time.
+  return params.length ? params : [{ slug: "coming-soon" }];
 }
 
 export async function generateMetadata({ params }: PageProps<"/reborn-dolls/[slug]">): Promise<Metadata> {

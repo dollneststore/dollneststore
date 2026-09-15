@@ -56,7 +56,7 @@ async function EditGuide({ params, searchParams }: PageProps<"/admin/guides/[id]
           </form>
         </div>
       </div>
-      <GuideForm key={`${guide.id}-${guide.updatedAt}`} guide={guide} />
+      <GuideForm key={guide.id} guide={guide} />
     </>
   );
 }

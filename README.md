@@ -17,6 +17,7 @@
 2. **SQL Editor** → `supabase/migrations/` klasöründeki dosyaları **sırayla** yapıştırıp **Run**:
    1. `20260915120000_initial_schema.sql` — tablolar, RLS, `product-images` bucket'ı, kategoriler
    2. `20260916090000_seo_and_guides.sql` — SEO alanları, sayfa SEO tablosu, rehberler (2 taslak rehberle)
+   3. `20260916150000_hardening.sql` — istek sınırlama, transaction'lı sipariş/stok fonksiyonları, sıkı storage kuralları
 3. **Authentication → Users → Add user**: `dollneststore@gmail.com` için şifreli kullanıcı oluşturun (“Auto confirm” açık).
 4. SQL Editor'de bu kullanıcıyı admin yapın:
    ```sql
