@@ -46,8 +46,10 @@ export function BasketView() {
                   <button
                     type="button"
                     onClick={() => setQty(item.productId, item.qty - 1)}
-                    className="grid size-9 place-items-center rounded-full text-lg hover:bg-blush"
+                    disabled={item.qty <= 1}
+                    className="grid size-9 place-items-center rounded-full text-lg hover:bg-blush disabled:opacity-40"
                     aria-label="Decrease quantity"
+                    title={item.qty <= 1 ? "Use Remove to take this baby out of your basket" : undefined}
                   >
                     −
                   </button>
@@ -60,6 +62,7 @@ export function BasketView() {
                     disabled={item.qty >= item.maxQty}
                     className="grid size-9 place-items-center rounded-full text-lg hover:bg-blush disabled:opacity-40"
                     aria-label="Increase quantity"
+                    title={item.qty >= item.maxQty ? `Only ${item.maxQty} available` : undefined}
                   >
                     +
                   </button>

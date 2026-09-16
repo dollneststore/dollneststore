@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/use-cart";
 import { BagIcon, CloseIcon, MenuIcon, SearchIcon } from "@/components/icons";
 import { container } from "@/components/ui/styles";
@@ -29,6 +29,15 @@ export function Header() {
 export function HeaderShell({ pathname }: { pathname: string | null }) {
   const { count } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
+  // Escape closes the menu, the way every other dismissible panel behaves.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen]);
   const isActive = (href: string) =>
     pathname !== null && (href === "/" ? pathname === "/" : !href.includes("#") && pathname.startsWith(href));
   const closeMenu = () => setMenuOpen(false);

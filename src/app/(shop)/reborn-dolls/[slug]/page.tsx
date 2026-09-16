@@ -12,7 +12,8 @@ import { categoryPath, categorySeo, productPath, productSeo } from "@/lib/seo-de
 export async function generateStaticParams() {
   const [categories, products] = await Promise.all([getCategories(), getShopProducts()]);
   const params = [...categories.map((c) => ({ slug: c.slug })), ...products.map((p) => ({ slug: p.slug }))];
-  // Cache Components needs at least one param to validate the route at build time.
+  // Cache Components requires at least one param; an empty catalogue would otherwise fail the
+  // build. The placeholder is answered with a real 404 by generateMetadata below.
   return params.length ? params : [{ slug: "coming-soon" }];
 }
 
@@ -25,6 +26,10 @@ export async function generateMetadata({ params }: PageProps<"/reborn-dolls/[slu
   }
 
   const product = await getProductBySlug(slug);
+  // An unknown slug renders the 404 page, but with a 200 status: with Cache Components every
+  // dynamic route streams its shell first, and the status can't change once streaming started.
+  // Next handles this with the noindex tag below, which keeps the URL out of search results.
+  // A real 404 status would mean checking the slug in proxy.ts on every request.
   if (!product) return { title: "Baby not found", robots: { index: false } };
   const seo = productSeo(product);
   return buildMetadata({

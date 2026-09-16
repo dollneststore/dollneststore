@@ -14,8 +14,9 @@ export const faqs = [
     a: "Every baby comes home dressed in a brand-new outfit with a dummy and bottle. Outfits are similar to the photos but can vary slightly — just ask us on WhatsApp if you'd like to see what's included.",
   },
   {
-    q: "Can I pay in instalments?",
-    a: "Our secure online checkout with cards, Apple Pay, Google Pay and Klarna is launching very soon. Until then, message us on WhatsApp to reserve your baby, or order through our Etsy shop.",
+    q: "How can I pay?",
+    // Payment methods are named only once they are live in checkout (CMA/ASA misleading advertising).
+    a: "Our secure online checkout is launching very soon. Until then, message us on WhatsApp to reserve your baby and we'll send you a secure payment link, or order through our Etsy shop.",
   },
   {
     q: "What if my doll arrives damaged?",

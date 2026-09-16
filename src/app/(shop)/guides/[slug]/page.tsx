@@ -16,13 +16,15 @@ import { site, whatsappUrl } from "@/lib/site";
 
 export async function generateStaticParams() {
   const guides = await getGuides();
-  // Cache Components needs at least one param to validate the route at build time.
+  // Cache Components requires at least one param. While no guide is published, this placeholder
+  // keeps the route buildable; generateMetadata below answers it with a real 404.
   return guides.length ? guides.map((g) => ({ slug: g.slug })) : [{ slug: "coming-soon" }];
 }
 
 export async function generateMetadata({ params }: PageProps<"/guides/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const guide = await getGuideBySlug(slug);
+  // Streamed routes answer with a 200 and this noindex tag; see the note in reborn-dolls/[slug].
   if (!guide) return { title: "Guide not found", robots: { index: false } };
   const seo = guideSeo(guide);
   return buildMetadata({

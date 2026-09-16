@@ -41,9 +41,8 @@ export function CheckoutView({ etsyUrl }: { etsyUrl: string }) {
         <span className="w-fit rounded-full bg-lilac-soft px-3 py-1 text-xs font-bold text-lilac">Secure checkout launching soon</span>
         <h2 className="font-serif text-[32px] leading-tight font-medium">Reserve your baby in one message</h2>
         <p className="leading-relaxed text-muted">
-          We&apos;re putting the finishing touches to our secure online checkout (cards, Apple Pay, Google Pay and
-          Klarna). Until then, send us your basket on WhatsApp and we&apos;ll reserve your baby and send a secure
-          payment link — or buy through our Etsy shop.
+          We&apos;re putting the finishing touches to our secure online checkout. Until then, send us your basket on
+          WhatsApp and we&apos;ll reserve your baby and send a secure payment link — or buy through our Etsy shop.
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
           <a href={whatsappUrl(message)} target="_blank" rel="noopener noreferrer" className={`${buttonPrimary} bg-whatsapp text-white hover:bg-[#1eb457]`}>
