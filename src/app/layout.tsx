@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { pageSeoDefaults } from "@/lib/content/page-seo";
-import { getSiteSettings } from "@/lib/data/catalog";
-import { heroImage } from "@/lib/data/seed";
+import { getFeaturedProducts, getSiteSettings } from "@/lib/data/catalog";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -21,8 +20,10 @@ const manrope = Manrope({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { googleSiteVerification } = await getSiteSettings();
+  const [{ googleSiteVerification }, featured] = await Promise.all([getSiteSettings(), getFeaturedProducts(1)]);
   const home = pageSeoDefaults["/"];
+  // Share image comes from our own catalogue photo, falling back to the logo.
+  const shareImage = featured[0]?.images[0];
 
   return {
     metadataBase: new URL(site.url),
@@ -34,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: "en_GB",
       siteName: site.name,
       url: "/",
-      images: [{ url: heroImage, alt: "A sleeping Dollnest reborn baby" }],
+      images: [{ url: shareImage?.url ?? site.logo, alt: shareImage?.alt ?? "A Dollnest reborn baby" }],
     },
     twitter: { card: "summary_large_image" },
     formatDetection: { telephone: false },

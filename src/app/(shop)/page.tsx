@@ -12,9 +12,8 @@ import { JsonLd } from "@/components/site/json-ld";
 import { container } from "@/components/ui/styles";
 import { faqs } from "@/lib/content/faq";
 import { getCategories, getFeaturedProducts, getReviews, getShopProducts, getSiteSettings, isForSale } from "@/lib/data/catalog";
-import { heroImage, seedSocialImages } from "@/lib/data/seed";
 import { staticPageMetadata } from "@/lib/seo";
-import { shopPath } from "@/lib/seo-defaults";
+import { isAccessoryProduct, shopPath } from "@/lib/seo-defaults";
 import { site } from "@/lib/site";
 
 export function generateMetadata() {
@@ -41,6 +40,14 @@ export default async function HomePage() {
     if (!isForSale(p) || !p.categorySlug) continue;
     fromPrices[p.categorySlug] = Math.min(fromPrices[p.categorySlug] ?? Infinity, p.pricePence);
   }
+
+  // Hero and social strip use our own photos from the catalogue (never an external host).
+  const gallery = products.filter((p) => !isAccessoryProduct(p) && p.images.length > 0);
+  const heroProduct = featured.find((p) => p.images.length > 0) ?? gallery[0];
+  const socialImages = gallery
+    .filter((p) => p.id !== heroProduct?.id)
+    .slice(0, 5)
+    .map((p) => p.images[0].url);
 
   const organization = {
     "@context": "https://schema.org",
@@ -90,13 +97,15 @@ export default async function HomePage() {
       <JsonLd data={organization} />
       <JsonLd data={website} />
       <JsonLd data={faqPage} />
-      <Hero imageUrl={heroImage} />
+      {heroProduct ? (
+        <Hero imageUrl={heroProduct.images[0].url} imageAlt={heroProduct.images[0].alt ?? heroProduct.title} />
+      ) : null}
       <FeaturedBabies products={featured} />
       <TrustStrip />
       <Collections categories={categories} fromPrices={fromPrices} />
       <Values />
       <ReviewsSection reviews={reviews} />
-      <SocialSection images={seedSocialImages} socials={settings.socials} />
+      {socialImages.length ? <SocialSection images={socialImages} socials={settings.socials} /> : null}
       <FaqSection />
     </div>
   );

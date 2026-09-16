@@ -25,7 +25,7 @@ export function Stars({ rating }: { rating: number }) {
   );
 }
 
-export function Hero({ imageUrl }: { imageUrl: string }) {
+export function Hero({ imageUrl, imageAlt }: { imageUrl: string; imageAlt?: string }) {
   return (
     <section className="grid items-center gap-[clamp(24px,4vw,56px)] pt-[clamp(32px,5vw,72px)] pb-[clamp(40px,5vw,64px)] md:grid-cols-2">
       <div className="flex flex-col items-start gap-5">
@@ -67,7 +67,7 @@ export function Hero({ imageUrl }: { imageUrl: string }) {
         <div className="absolute inset-[30px] overflow-hidden rounded-[50%_50%_16px_16px]">
           <Image
             src={imageUrl}
-            alt="A sleeping reborn baby girl dressed in pink"
+            alt={imageAlt ?? "A sleeping reborn baby dressed with care"}
             fill
             preload
             sizes="(min-width: 768px) 45vw, 90vw"

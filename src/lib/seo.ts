@@ -2,7 +2,6 @@ import "server-only";
 import type { Metadata } from "next";
 import { pageSeoDefaults, type StaticSeoPath } from "@/lib/content/page-seo";
 import { getPageSeo } from "@/lib/data/catalog";
-import { heroImage } from "@/lib/data/seed";
 import { site } from "@/lib/site";
 
 type MetadataInput = {
@@ -16,7 +15,8 @@ type MetadataInput = {
 
 /** Full, absolute titles are used everywhere so the admin controls exactly what Google shows. */
 export function buildMetadata({ title, description, path, image, article, noIndex }: MetadataInput): Metadata {
-  const images = [{ url: image || heroImage }];
+  // Falls back to our own logo rather than an external image.
+  const images = [{ url: image || site.logo }];
   const shared = { url: path, title, description, siteName: site.name, locale: "en_GB", images };
 
   return {
