@@ -18,9 +18,11 @@ export type PhotoMigrationResult = {
 };
 
 function extensionFor(contentType: string | null, source: string) {
-  if (contentType?.includes("png") || source.endsWith(".png")) return "png";
+  if (contentType?.includes("png")) return "png";
   if (contentType?.includes("webp")) return "webp";
   if (contentType?.includes("avif")) return "avif";
+  if (contentType?.includes("jpeg")) return "jpg";
+  if (source.endsWith(".png")) return "png";
   return "jpg";
 }
 
@@ -28,6 +30,9 @@ function extensionFor(contentType: string | null, source: string) {
  * Copies a batch of Etsy-hosted photos (products, collection covers, review photos) into
  * Supabase Storage and repoints the rows at them, so the shop keeps working if a listing
  * is removed from Etsy. Admin only; the client calls it until nothing is left.
+ *
+ * A photo that can't be downloaded (deleted listing) never blocks the rest: when a batch
+ * copies nothing, the same call moves on to covers and review photos.
  */
 export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
   await adminContext();
@@ -58,6 +63,20 @@ export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
     return { path, publicUrl: db.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl };
   };
 
+  /** Uploads the photo, then points the row at it. If the row can't be updated the upload is removed again. */
+  const move = async (
+    sourceUrl: string,
+    folder: "products" | "reviews",
+    save: (stored: { path: string; publicUrl: string }) => PromiseLike<{ error: { message: string } | null }>,
+  ) => {
+    const stored = await store(sourceUrl, folder);
+    const { error } = await save(stored);
+    if (error) {
+      await db.storage.from(PRODUCT_IMAGES_BUCKET).remove([stored.path]);
+      throw new Error(error.message);
+    }
+  };
+
   let copied = 0;
   let failed = 0;
 
@@ -70,9 +89,9 @@ export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
 
   for (const photo of productPhotos ?? []) {
     try {
-      const { path, publicUrl } = await store(photo.url, "products");
-      const { error } = await db.from("product_images").update({ url: publicUrl, storage_path: path }).eq("id", photo.id);
-      if (error) throw new Error(error.message);
+      await move(photo.url, "products", ({ path, publicUrl }) =>
+        db.from("product_images").update({ url: publicUrl, storage_path: path }).eq("id", photo.id),
+      );
       copied += 1;
     } catch (e) {
       console.error("[admin/photos]", photo.url, (e as Error).message);
@@ -80,8 +99,8 @@ export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
     }
   }
 
-  // Collection covers and review photos once the product photos are done.
-  if (!productPhotos?.length) {
+  // Covers and review photos: also reached when the product batch copied nothing.
+  if (!productPhotos?.length || copied === 0) {
     const { data: covers } = await db
       .from("categories")
       .select("slug, image_url")
@@ -90,9 +109,9 @@ export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
 
     for (const category of covers ?? []) {
       try {
-        const { publicUrl } = await store(category.image_url as string, "products");
-        const { error } = await db.from("categories").update({ image_url: publicUrl }).eq("slug", category.slug);
-        if (error) throw new Error(error.message);
+        await move(category.image_url as string, "products", ({ publicUrl }) =>
+          db.from("categories").update({ image_url: publicUrl }).eq("slug", category.slug),
+        );
         copied += 1;
       } catch (e) {
         console.error("[admin/photos]", category.image_url, (e as Error).message);
@@ -100,23 +119,21 @@ export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
       }
     }
 
-    if (!covers?.length) {
-      const { data: reviewPhotos } = await db
-        .from("reviews")
-        .select("id, image_url")
-        .like("image_url", `%${ETSY_HOST}%`)
-        .limit(BATCH);
+    const { data: reviewPhotos } = await db
+      .from("reviews")
+      .select("id, image_url")
+      .like("image_url", `%${ETSY_HOST}%`)
+      .limit(BATCH);
 
-      for (const review of reviewPhotos ?? []) {
-        try {
-          const { publicUrl } = await store(review.image_url as string, "reviews");
-          const { error } = await db.from("reviews").update({ image_url: publicUrl }).eq("id", review.id);
-          if (error) throw new Error(error.message);
-          copied += 1;
-        } catch (e) {
-          console.error("[admin/photos]", review.image_url, (e as Error).message);
-          failed += 1;
-        }
+    for (const review of reviewPhotos ?? []) {
+      try {
+        await move(review.image_url as string, "reviews", ({ publicUrl }) =>
+          db.from("reviews").update({ image_url: publicUrl }).eq("id", review.id),
+        );
+        copied += 1;
+      } catch (e) {
+        console.error("[admin/photos]", review.image_url, (e as Error).message);
+        failed += 1;
       }
     }
   }

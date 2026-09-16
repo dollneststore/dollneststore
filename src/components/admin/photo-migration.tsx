@@ -11,8 +11,10 @@ export function PhotoMigration({ initialRemaining }: { initialRemaining: number 
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const stop = useRef(false);
-  const total = Math.max(initialRemaining, 1);
-  const percent = Math.min(100, Math.round(((initialRemaining - remaining) / total) * 100));
+  // The bar measures progress against the largest count we've seen, so adding photos
+  // mid-run can't push it out of range.
+  const total = Math.max(initialRemaining, remaining + copied, 1);
+  const percent = Math.min(100, Math.max(0, Math.round(((total - remaining) / total) * 100)));
 
   async function run() {
     stop.current = false;
@@ -34,12 +36,21 @@ export function PhotoMigration({ initialRemaining }: { initialRemaining: number 
         setError(result.error);
         break;
       }
-      if (result.remaining === 0 || (result.copied === 0 && result.failed === 0)) break;
+      if (result.remaining === 0) break;
+      // Nothing copied in a whole batch: the rest can't be downloaded (removed from Etsy).
+      if (result.copied === 0) {
+        if (result.failed > 0) {
+          setError(
+            `${result.failed} photo${result.failed === 1 ? "" : "s"} can't be downloaded from Etsy any more — most likely the listing was deleted. Replace them on the product page.`,
+          );
+        }
+        break;
+      }
     }
     setRunning(false);
   }
 
-  if (initialRemaining === 0) {
+  if (initialRemaining === 0 && copied === 0) {
     return <p className="text-sm font-semibold text-sage-deep">All photos are stored on our own servers ♡</p>;
   }
 
@@ -51,9 +62,15 @@ export function PhotoMigration({ initialRemaining }: { initialRemaining: number 
           : "All photos are stored on our own servers ♡"}
       </p>
 
-      {(running || copied > 0) && (
+      {(running || copied > 0 || failed > 0) && (
         <div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-line" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
+          <div
+            className="h-2 w-full overflow-hidden rounded-full bg-line"
+            role="progressbar"
+            aria-valuenow={percent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
             <div className="h-full bg-lilac transition-[width] duration-300" style={{ width: `${percent}%` }} />
           </div>
           <p aria-live="polite" className="mt-2 text-xs text-muted">
@@ -71,7 +88,7 @@ export function PhotoMigration({ initialRemaining }: { initialRemaining: number 
 
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={() => void run()} disabled={running || remaining === 0} className={adminButton}>
-          {running ? "Copying…" : copied > 0 ? "Continue" : "Copy photos to our storage"}
+          {running ? "Copying…" : copied > 0 || failed > 0 ? "Continue" : "Copy photos to our storage"}
         </button>
         {running ? (
           <button type="button" onClick={() => (stop.current = true)} className={adminButtonSecondary}>

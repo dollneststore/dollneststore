@@ -20,9 +20,19 @@ const manrope = Manrope({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [{ googleSiteVerification }, featured] = await Promise.all([getSiteSettings(), getFeaturedProducts(1)]);
   const home = pageSeoDefaults["/"];
-  // Share image comes from our own catalogue photo, falling back to the logo.
+  // This runs for every route, so a database hiccup must never take the site down:
+  // both reads fall back to static values.
+  const [settings, featured] = await Promise.all([
+    getSiteSettings().catch((error: unknown) => {
+      console.error("[metadata] settings", error);
+      return null;
+    }),
+    getFeaturedProducts(1).catch((error: unknown) => {
+      console.error("[metadata] featured", error);
+      return [];
+    }),
+  ]);
   const shareImage = featured[0]?.images[0];
 
   return {
@@ -39,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: { card: "summary_large_image" },
     formatDetection: { telephone: false },
-    ...(googleSiteVerification ? { verification: { google: googleSiteVerification } } : {}),
+    ...(settings?.googleSiteVerification ? { verification: { google: settings.googleSiteVerification } } : {}),
   };
 }
 
