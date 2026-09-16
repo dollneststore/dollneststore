@@ -233,6 +233,18 @@ export async function getAdminReviews(): Promise<Review[]> {
   return (data as ReviewRow[]).map(mapReview);
 }
 
+/** How many photos still load from Etsy rather than our own storage. */
+export async function getEtsyPhotoCount(): Promise<number> {
+  const { supabase } = await adminContext();
+  const [images, reviews] = await Promise.all([
+    supabase.from("product_images").select("id", { count: "exact", head: true }).is("storage_path", null).like("url", "%i.etsystatic.com%"),
+    supabase.from("reviews").select("id", { count: "exact", head: true }).like("image_url", "%i.etsystatic.com%"),
+  ]);
+  if (images.error) throw new Error(images.error.message);
+  if (reviews.error) throw new Error(reviews.error.message);
+  return (images.count ?? 0) + (reviews.count ?? 0);
+}
+
 export async function getAdminSettings(): Promise<SiteSettings> {
   const { supabase } = await adminContext();
   const { data, error } = await supabase
