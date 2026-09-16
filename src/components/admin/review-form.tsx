@@ -63,7 +63,7 @@ export function ReviewForm({ products }: { products: { id: string; title: string
           <Field label="Date" htmlFor="reviewedAt" error={errors.reviewedAt}>
             <input id="reviewedAt" name="reviewedAt" type="date" className={inputClass} />
           </Field>
-          <Field label="Photo URL (optional)" htmlFor="imageUrl" error={errors.imageUrl} hint="A link from Etsy or your Supabase storage.">
+          <Field label="Photo URL (optional)" htmlFor="imageUrl" error={errors.imageUrl} hint="Paste a link from your own photo storage (upload it on a product first).">
             <input id="imageUrl" name="imageUrl" type="url" placeholder="https://" className={inputClass} />
           </Field>
         </div>

@@ -1,15 +1,23 @@
 import Image from "next/image";
 import Link from "next/link";
 import { container } from "@/components/ui/styles";
-import { getCategories, getCopyrightYear, getSiteSettings } from "@/lib/data/catalog";
+import { getCategories, getCopyrightYear, getSiteSettings, resolveSettings } from "@/lib/data/catalog";
+import { fallback } from "@/lib/errors";
 import { categoryDefaults, categoryPath, shopPath } from "@/lib/seo-defaults";
 import { addressLine, companyLine, site, whatsappUrl } from "@/lib/site";
+import type { Category } from "@/lib/types";
 import { NewsletterForm } from "./newsletter-form";
 
 const heading = "text-xs font-bold uppercase tracking-[.14em] text-lilac";
 
 export async function Footer() {
-  const [{ socials }, categories, year] = await Promise.all([getSiteSettings(), getCategories(), getCopyrightYear()]);
+  // The footer sits in the shop layout, outside the reach of error.tsx, so a database
+  // failure degrades it (default socials, no collection links) instead of 500ing the page.
+  const [{ socials }, categories, year] = await Promise.all([
+    getSiteSettings().catch(fallback(resolveSettings(null), "[footer] settings")),
+    getCategories().catch(fallback([] as Category[], "[footer] categories")),
+    getCopyrightYear(),
+  ]);
   const socialLinks = [
     { href: socials.tiktok, label: "TikTok", short: "TT", bg: "bg-blush" },
     { href: socials.instagram, label: "Instagram", short: "IG", bg: "bg-lilac-soft" },

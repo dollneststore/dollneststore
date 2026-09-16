@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { FormState } from "@/lib/admin/form-state";
-import { allowRequest, clientIp } from "@/lib/rate-limit";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { isSupabaseConfigured } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
 
@@ -30,11 +30,15 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
   if (!parsed.success) return { ok: false, message: "Enter your email and password." };
 
   // Supabase sees Vercel's IPs, not the visitor's, so throttle here per IP and per account.
-  const [ipAllowed, emailAllowed] = await Promise.all([
-    allowRequest("login-ip", await clientIp(), 20, 15 * 60),
-    allowRequest("login-email", parsed.data.email, 8, 15 * 60),
+  const limits = await Promise.all([
+    checkRateLimit("login-ip", await clientIp(), 20, 15 * 60),
+    checkRateLimit("login-email", parsed.data.email, 8, 15 * 60),
   ]);
-  if (!ipAllowed || !emailAllowed) {
+  // Sign-in fails closed: without a working limiter, password guessing would be unlimited.
+  if (limits.includes("unavailable")) {
+    return { ok: false, message: "Sign-in is temporarily unavailable. Please try again in a few minutes." };
+  }
+  if (limits.includes("blocked")) {
     return { ok: false, message: "Too many sign-in attempts. Please wait 15 minutes and try again." };
   }
 

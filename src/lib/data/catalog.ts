@@ -25,12 +25,25 @@ import { seedCategories, seedProducts, seedReviews } from "./seed";
 // Public data access. Everything here is cached and tagged so the admin panel
 // can refresh it instantly with updateTag() after a change.
 
+/**
+ * Seed data is a local convenience so the site can be run without Supabase. On the deployed
+ * site it must never appear: quietly serving seed products would show customers prices and
+ * stock for dolls that don't exist, so a missing configuration fails loudly there instead.
+ */
+function publicDb() {
+  const db = createPublicClient();
+  if (!db && process.env.VERCEL === "1") {
+    throw new Error("Supabase is not configured (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY).");
+  }
+  return db;
+}
+
 export async function getShopProducts(): Promise<Product[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("products");
 
-  const db = createPublicClient();
+  const db = publicDb();
   if (!db) return seedProducts;
 
   const { data, error } = await db
@@ -64,7 +77,7 @@ export async function getCategories(): Promise<Category[]> {
   cacheLife("days");
   cacheTag("categories");
 
-  const db = createPublicClient();
+  const db = publicDb();
   if (!db) return seedCategories;
 
   const { data, error } = await db.from("categories").select(CATEGORY_COLUMNS).order("sort_order");
@@ -77,7 +90,7 @@ export async function getReviews(limit = 6): Promise<Review[]> {
   cacheLife("hours");
   cacheTag("reviews");
 
-  const db = createPublicClient();
+  const db = publicDb();
   if (!db) return seedReviews.slice(0, limit);
 
   const { data, error } = await db
@@ -97,7 +110,7 @@ export async function getProductReviewStats(): Promise<Record<string, ProductRev
   cacheLife("hours");
   cacheTag("reviews");
 
-  const db = createPublicClient();
+  const db = publicDb();
   if (!db) return {};
 
   const { data, error } = await db
@@ -142,7 +155,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   cacheLife("days");
   cacheTag("settings");
 
-  const db = createPublicClient();
+  const db = publicDb();
   if (!db) return resolveSettings(null);
 
   const { data, error } = await db
@@ -159,7 +172,7 @@ async function getPageSeoMap(): Promise<Record<string, PageSeo>> {
   cacheLife("days");
   cacheTag("seo");
 
-  const db = createPublicClient();
+  const db = publicDb();
   if (!db) return {};
 
   const { data, error } = await db.from("page_seo").select("path, title, description, og_image_url");
@@ -177,7 +190,7 @@ export async function getGuides(): Promise<Guide[]> {
   cacheLife("hours");
   cacheTag("guides");
 
-  const db = createPublicClient();
+  const db = publicDb();
   if (!db) return [];
 
   const { data, error } = await db

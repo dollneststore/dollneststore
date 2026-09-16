@@ -38,10 +38,12 @@ const optionalHttpsUrl = z
   .union([z.literal(""), z.url({ protocol: /^https$/, error: "Use a full https:// link" })])
   .transform((v) => v || null);
 
-/** Only hosts that next/image and the CSP allow: Etsy's CDN and this project's public Supabase storage. */
+/**
+ * Only this project's own public Supabase storage. Etsy's CDN is deliberately not accepted:
+ * the shop must keep working when a listing is removed from Etsy, so new photos are stored here.
+ */
 function isAllowedImageUrl(value: string) {
   const url = new URL(value);
-  if (url.hostname === "i.etsystatic.com") return true;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   return Boolean(
     supabaseUrl && url.hostname === new URL(supabaseUrl).hostname && url.pathname.startsWith("/storage/v1/object/public/"),
@@ -53,7 +55,7 @@ const optionalImageUrl = z
     z.literal(""),
     z
       .url({ protocol: /^https$/, error: "Use a full https:// link" })
-      .refine(isAllowedImageUrl, "Use a photo link from your product images (Supabase storage or Etsy)"),
+      .refine(isAllowedImageUrl, "Use a photo link from your own storage — upload the photo on a product first, then copy its link"),
   ])
   .transform((v) => v || null);
 

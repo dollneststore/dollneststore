@@ -2,43 +2,70 @@
 
 import { randomUUID } from "node:crypto";
 import { updateTag } from "next/cache";
+import { z } from "zod";
 import { adminContext } from "@/lib/admin/context";
+import { SLUG_PATTERN } from "@/lib/admin/validation";
 import { PRODUCT_IMAGES_BUCKET } from "@/lib/supabase/public";
 import { createServiceClient } from "@/lib/supabase/service";
 
 const ETSY_HOST = "i.etsystatic.com";
 // Small batches keep every request well inside the serverless time limit.
 const BATCH = 4;
+// The storage bucket only accepts these; anything else is stored as JPEG.
+const IMAGE_TYPES: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/avif": "avif",
+};
+
+/** A photo that could not be copied. The panel sends these back so we stop retrying them. */
+export type StuckPhoto = { kind: "image" | "category" | "review"; id: string };
 
 export type PhotoMigrationResult = {
   copied: number;
-  failed: number;
+  /** Photos attempted in this batch that could not be copied (deleted listing, unreadable file…). */
+  stuck: StuckPhoto[];
+  /** Rows still holding an Etsy URL — including the stuck ones. */
   remaining: number;
   error?: string;
 };
 
-function extensionFor(contentType: string | null, source: string) {
-  if (contentType?.includes("png")) return "png";
-  if (contentType?.includes("webp")) return "webp";
-  if (contentType?.includes("avif")) return "avif";
-  if (contentType?.includes("jpeg")) return "jpg";
-  if (source.endsWith(".png")) return "png";
-  return "jpg";
+const skipSchema = z.object({
+  image: z.array(z.uuid()).max(500),
+  category: z.array(z.string().max(60).regex(SLUG_PATTERN)).max(500),
+  review: z.array(z.uuid()).max(500),
+});
+
+export type PhotoMigrationSkip = z.infer<typeof skipSchema>;
+
+function typeAndExtension(contentType: string | null, source: string) {
+  const declared = contentType?.split(";")[0]?.trim().toLowerCase() ?? "";
+  if (IMAGE_TYPES[declared]) return { type: declared, ext: IMAGE_TYPES[declared] };
+  if (source.endsWith(".png")) return { type: "image/png", ext: "png" };
+  if (source.endsWith(".webp")) return { type: "image/webp", ext: "webp" };
+  return { type: "image/jpeg", ext: "jpg" };
 }
 
 /**
  * Copies a batch of Etsy-hosted photos (products, collection covers, review photos) into
  * Supabase Storage and repoints the rows at them, so the shop keeps working if a listing
- * is removed from Etsy. Admin only; the client calls it until nothing is left.
+ * is removed from Etsy. Admin only; the panel calls it until nothing copyable is left.
  *
- * A photo that can't be downloaded (deleted listing) never blocks the rest: when a batch
- * copies nothing, the same call moves on to covers and review photos.
+ * Photos that can't be copied are returned as `stuck`; the panel passes them back in `skip`
+ * so a permanently dead photo is attempted once and then never blocks or re-counts.
  */
-export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
+export async function copyEtsyPhotoBatch(skipInput: unknown = {}): Promise<PhotoMigrationResult> {
   await adminContext();
 
+  const parsed = skipSchema.safeParse({ image: [], category: [], review: [], ...(skipInput as object) });
+  if (!parsed.success) return { copied: 0, stuck: [], remaining: 0, error: "Could not read the list of skipped photos." };
+  const skip = parsed.data;
+
   const db = createServiceClient();
-  if (!db) return { copied: 0, failed: 0, remaining: 0, error: "SUPABASE_SECRET_KEY is not set on the server." };
+  if (!db) return { copied: 0, stuck: [], remaining: 0, error: "SUPABASE_SECRET_KEY is not set on the server." };
+
+  const quoted = (values: string[]) => `(${values.map((v) => `"${v}"`).join(",")})`;
 
   const countLeft = async () => {
     const [products, categories, reviews] = await Promise.all([
@@ -52,10 +79,10 @@ export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
   const store = async (sourceUrl: string, folder: "products" | "reviews") => {
     const res = await fetch(sourceUrl);
     if (!res.ok) throw new Error(`download failed (${res.status})`);
-    const contentType = res.headers.get("content-type");
-    const path = `${folder}/${randomUUID()}.${extensionFor(contentType, sourceUrl)}`;
+    const { type, ext } = typeAndExtension(res.headers.get("content-type"), sourceUrl);
+    const path = `${folder}/${randomUUID()}.${ext}`;
     const { error } = await db.storage.from(PRODUCT_IMAGES_BUCKET).upload(path, await res.arrayBuffer(), {
-      contentType: contentType?.split(";")[0] ?? "image/jpeg",
+      contentType: type,
       cacheControl: "31536000",
       upsert: false,
     });
@@ -63,29 +90,35 @@ export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
     return { path, publicUrl: db.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl };
   };
 
-  /** Uploads the photo, then points the row at it. If the row can't be updated the upload is removed again. */
+  /** Uploads the photo, then points the row at it. Any failure removes the upload again. */
   const move = async (
     sourceUrl: string,
     folder: "products" | "reviews",
     save: (stored: { path: string; publicUrl: string }) => PromiseLike<{ error: { message: string } | null }>,
   ) => {
     const stored = await store(sourceUrl, folder);
-    const { error } = await save(stored);
-    if (error) {
-      await db.storage.from(PRODUCT_IMAGES_BUCKET).remove([stored.path]);
-      throw new Error(error.message);
+    try {
+      const { error } = await save(stored);
+      if (error) throw new Error(error.message);
+    } catch (e) {
+      await db.storage
+        .from(PRODUCT_IMAGES_BUCKET)
+        .remove([stored.path])
+        .catch(() => {});
+      throw e;
     }
   };
 
   let copied = 0;
-  let failed = 0;
+  const stuck: StuckPhoto[] = [];
+  const record = (kind: StuckPhoto["kind"], id: string, source: string, e: unknown) => {
+    console.error("[admin/photos]", source, (e as Error).message);
+    stuck.push({ kind, id });
+  };
 
-  const { data: productPhotos } = await db
-    .from("product_images")
-    .select("id, url")
-    .is("storage_path", null)
-    .like("url", `%${ETSY_HOST}%`)
-    .limit(BATCH);
+  const imageQuery = db.from("product_images").select("id, url").is("storage_path", null).like("url", `%${ETSY_HOST}%`);
+  if (skip.image.length) imageQuery.not("id", "in", quoted(skip.image));
+  const { data: productPhotos } = await imageQuery.limit(BATCH);
 
   for (const photo of productPhotos ?? []) {
     try {
@@ -94,18 +127,16 @@ export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
       );
       copied += 1;
     } catch (e) {
-      console.error("[admin/photos]", photo.url, (e as Error).message);
-      failed += 1;
+      record("image", photo.id, photo.url, e);
     }
   }
 
-  // Covers and review photos: also reached when the product batch copied nothing.
+  // Covers and review photos: also reached when the product batch copied nothing,
+  // so an uncopyable product photo can never hold up the rest.
   if (!productPhotos?.length || copied === 0) {
-    const { data: covers } = await db
-      .from("categories")
-      .select("slug, image_url")
-      .like("image_url", `%${ETSY_HOST}%`)
-      .limit(BATCH);
+    const coverQuery = db.from("categories").select("slug, image_url").like("image_url", `%${ETSY_HOST}%`);
+    if (skip.category.length) coverQuery.not("slug", "in", quoted(skip.category));
+    const { data: covers } = await coverQuery.limit(BATCH);
 
     for (const category of covers ?? []) {
       try {
@@ -114,16 +145,13 @@ export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
         );
         copied += 1;
       } catch (e) {
-        console.error("[admin/photos]", category.image_url, (e as Error).message);
-        failed += 1;
+        record("category", category.slug, category.image_url as string, e);
       }
     }
 
-    const { data: reviewPhotos } = await db
-      .from("reviews")
-      .select("id, image_url")
-      .like("image_url", `%${ETSY_HOST}%`)
-      .limit(BATCH);
+    const reviewQuery = db.from("reviews").select("id, image_url").like("image_url", `%${ETSY_HOST}%`);
+    if (skip.review.length) reviewQuery.not("id", "in", quoted(skip.review));
+    const { data: reviewPhotos } = await reviewQuery.limit(BATCH);
 
     for (const review of reviewPhotos ?? []) {
       try {
@@ -132,8 +160,7 @@ export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
         );
         copied += 1;
       } catch (e) {
-        console.error("[admin/photos]", review.image_url, (e as Error).message);
-        failed += 1;
+        record("review", review.id, review.image_url as string, e);
       }
     }
   }
@@ -143,5 +170,5 @@ export async function copyEtsyPhotoBatch(): Promise<PhotoMigrationResult> {
     updateTag("categories");
     updateTag("reviews");
   }
-  return { copied, failed, remaining: await countLeft() };
+  return { copied, stuck, remaining: await countLeft() };
 }

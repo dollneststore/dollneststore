@@ -2,6 +2,7 @@ import "server-only";
 import type { Metadata } from "next";
 import { pageSeoDefaults, type StaticSeoPath } from "@/lib/content/page-seo";
 import { getPageSeo } from "@/lib/data/catalog";
+import { fallback } from "@/lib/errors";
 import { site } from "@/lib/site";
 
 type MetadataInput = {
@@ -39,7 +40,9 @@ export function buildMetadata({ title, description, path, image, article, noInde
 /** Static pages: values saved in /admin/seo win over the defaults in code. */
 export async function staticPageMetadata(path: StaticSeoPath): Promise<Metadata> {
   const defaults = pageSeoDefaults[path];
-  const saved = await getPageSeo(path);
+  // Admin SEO overrides are an enhancement: if they can't be read, the page still renders
+  // with the defaults in code instead of failing to generate metadata.
+  const saved = await getPageSeo(path).catch(fallback(null, `[seo] ${path}`));
   return buildMetadata({
     path,
     title: saved?.title || defaults.title,

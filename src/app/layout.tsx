@@ -2,7 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { pageSeoDefaults } from "@/lib/content/page-seo";
 import { getFeaturedProducts, getSiteSettings } from "@/lib/data/catalog";
+import { fallback } from "@/lib/errors";
 import { site } from "@/lib/site";
+import type { Product } from "@/lib/types";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -24,14 +26,8 @@ export async function generateMetadata(): Promise<Metadata> {
   // This runs for every route, so a database hiccup must never take the site down:
   // both reads fall back to static values.
   const [settings, featured] = await Promise.all([
-    getSiteSettings().catch((error: unknown) => {
-      console.error("[metadata] settings", error);
-      return null;
-    }),
-    getFeaturedProducts(1).catch((error: unknown) => {
-      console.error("[metadata] featured", error);
-      return [];
-    }),
+    getSiteSettings().catch(fallback(null, "[metadata] settings")),
+    getFeaturedProducts(1).catch(fallback([] as Product[], "[metadata] featured")),
   ]);
   const shareImage = featured[0]?.images[0];
 

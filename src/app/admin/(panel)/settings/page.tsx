@@ -4,6 +4,7 @@ import { AdminCard, LoadingBlock, PageHeader } from "@/components/admin/form-ui"
 import { PhotoMigration } from "@/components/admin/photo-migration";
 import { SettingsForm } from "@/components/admin/settings-form";
 import { getAdminSettings, getEtsyPhotoCount } from "@/lib/admin/queries";
+import { fallback } from "@/lib/errors";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -20,12 +21,10 @@ export default function SettingsPage() {
 
 async function Settings() {
   // The photo counter is extra information: it must never stop the settings form from loading.
+  // `fallback` still rethrows the sign-in redirect that requireAdmin() throws for a signed-out visitor.
   const [settings, etsyPhotos] = await Promise.all([
     getAdminSettings(),
-    getEtsyPhotoCount().catch((error: unknown) => {
-      console.error("[admin/settings] photo count", error);
-      return null;
-    }),
+    getEtsyPhotoCount().catch(fallback(null, "[admin/settings] photo count")),
   ]);
 
   return (
