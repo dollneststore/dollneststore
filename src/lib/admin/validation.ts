@@ -126,17 +126,6 @@ export const guideSchema = z.object({
   ...seoFields,
 });
 
-/** Accepts either the bare code or the whole <meta name="google-site-verification" …> tag. */
-export const verificationSchema = z
-  .string()
-  .trim()
-  .max(300)
-  .transform((v) => {
-    const fromTag = v.match(/content=["']([^"']+)["']/);
-    return (fromTag ? fromTag[1] : v).trim() || null;
-  })
-  .refine((v) => v === null || /^[A-Za-z0-9_-]{10,100}$/.test(v), "Paste the HTML tag or code from Google Search Console");
-
 export const orderUpdateSchema = z.object({
   status: z.enum(orderStatuses),
   carrier: optionalText(60),

@@ -8,7 +8,6 @@ import {
   mapCategory,
   mapDiscountCode,
   mapGuide,
-  mapPageSeo,
   mapProduct,
   mapReview,
   PRODUCT_COLUMNS,
@@ -16,7 +15,6 @@ import {
   type CategoryRow,
   type DiscountCodeRow,
   type GuideRow,
-  type PageSeoRow,
   type ProductRow,
   type ReviewRow,
 } from "@/lib/data/mappers";
@@ -28,7 +26,6 @@ import {
   type Guide,
   type OrderChannel,
   type OrderStatus,
-  type PageSeo,
   type Product,
   type Review,
   type SiteSettings,
@@ -129,20 +126,6 @@ export async function getAdminGuide(id: string): Promise<Guide | null> {
   const { data, error } = await supabase.from("posts").select(GUIDE_COLUMNS).eq("id", id).maybeSingle();
   if (error) throw new Error(error.message);
   return data ? mapGuide(data as GuideRow) : null;
-}
-
-export async function getAdminSeo(): Promise<{ pages: Record<string, PageSeo>; googleSiteVerification: string | null }> {
-  const { supabase } = await adminContext();
-  const [pages, settings] = await Promise.all([
-    supabase.from("page_seo").select("path, title, description, og_image_url"),
-    supabase.from("site_settings").select("google_site_verification").eq("id", 1).maybeSingle(),
-  ]);
-  if (pages.error) throw new Error(pages.error.message);
-  if (settings.error) throw new Error(settings.error.message);
-  return {
-    pages: Object.fromEntries((pages.data as PageSeoRow[]).map((row) => [row.path, mapPageSeo(row)])),
-    googleSiteVerification: settings.data?.google_site_verification ?? null,
-  };
 }
 
 export async function getProductOptions(): Promise<ProductOption[]> {

@@ -1,4 +1,4 @@
-/** Default titles and descriptions for static pages. Values saved in /admin/seo override these. */
+/** Default titles and descriptions for static pages. A row in `page_seo` overrides these. */
 export const pageSeoDefaults = {
   "/": {
     label: "Home page",

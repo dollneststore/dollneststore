@@ -37,7 +37,7 @@ export function buildMetadata({ title, description, path, image, article, noInde
   };
 }
 
-/** Static pages: values saved in /admin/seo win over the defaults in code. */
+/** Static pages: a row saved in `page_seo` wins over the defaults in code. */
 export async function staticPageMetadata(path: StaticSeoPath): Promise<Metadata> {
   const defaults = pageSeoDefaults[path];
   // Admin SEO overrides are an enhancement: if they can't be read, the page still renders
