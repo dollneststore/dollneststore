@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { LoadingBlock, PageHeader } from "@/components/admin/form-ui";
 import { ReviewForm } from "@/components/admin/review-form";
-import { ReviewPhotoField } from "@/components/admin/review-photo-field";
+import { PhotoField } from "@/components/admin/photo-field";
 import { deleteReview, setReviewPhoto, setReviewPublished } from "@/lib/admin/actions/reviews";
 import { getAdminReviews, getReviewProductOptions } from "@/lib/admin/queries";
 import { formatDate } from "@/lib/format";
@@ -57,7 +57,8 @@ async function Reviews() {
                   </summary>
                   <form action={setReviewPhoto} className="mt-2 flex flex-col gap-2">
                     <input type="hidden" name="id" value={r.id} />
-                    <ReviewPhotoField defaultValue={r.imageUrl ?? ""} name={`imageUrl-${r.id}`} />
+                    {/* The field name stays "imageUrl" (that's what the action reads); only the id is unique. */}
+                    <PhotoField id={`photo-${r.id}`} defaultValue={r.imageUrl ?? ""} uploadLabel="Upload the customer's photo" />
                     <button type="submit" className="w-fit text-xs font-bold text-lilac hover:underline">
                       Save photo
                     </button>

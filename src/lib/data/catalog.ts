@@ -85,6 +85,21 @@ export async function getCategories(): Promise<Category[]> {
   return (data as CategoryRow[]).map(mapCategory);
 }
 
+/**
+ * Collections are shown with a cover photo. When one hasn't been set in the admin panel
+ * (the accessories collection was added without one), we borrow the first photo from a
+ * product in that collection, so a collection card is never an empty box.
+ */
+export async function getCategoriesWithCovers(): Promise<Category[]> {
+  const [categories, products] = await Promise.all([getCategories(), getShopProducts()]);
+  return categories.map((category) => {
+    if (category.imageUrl) return category;
+    const withPhotos = products.filter((p) => p.categorySlug === category.slug && p.images.length > 0);
+    const cover = (withPhotos.find(isForSale) ?? withPhotos[0])?.images[0];
+    return cover ? { ...category, imageUrl: cover.url } : category;
+  });
+}
+
 export async function getReviews(limit = 6): Promise<Review[]> {
   "use cache";
   cacheLife("hours");

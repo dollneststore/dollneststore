@@ -11,7 +11,7 @@ import {
 import { JsonLd } from "@/components/site/json-ld";
 import { container } from "@/components/ui/styles";
 import { faqs } from "@/lib/content/faq";
-import { getCategories, getFeaturedProducts, getReviews, getShopProducts, getSiteSettings, isForSale } from "@/lib/data/catalog";
+import { getCategoriesWithCovers, getFeaturedProducts, getReviews, getShopProducts, getSiteSettings, isForSale } from "@/lib/data/catalog";
 import { staticPageMetadata } from "@/lib/seo";
 import { isAccessoryProduct, shopPath } from "@/lib/seo-defaults";
 import { site } from "@/lib/site";
@@ -23,7 +23,7 @@ export function generateMetadata() {
 export default async function HomePage() {
   const [featured, categories, latestReviews, settings, products] = await Promise.all([
     getFeaturedProducts(4),
-    getCategories(),
+    getCategoriesWithCovers(),
     getReviews(24),
     getSiteSettings(),
     getShopProducts(),

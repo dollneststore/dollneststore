@@ -51,6 +51,10 @@ async function CategoryList() {
                   <span>
                     {c.name}
                     <span className="block text-xs font-normal text-muted">{categoryPath(c.slug)}</span>
+                    {/* Without a cover the shop borrows a product photo, so the card is never empty. */}
+                    {c.imageUrl ? null : (
+                      <span className="block text-xs font-normal text-dusty">No cover — a product photo is used</span>
+                    )}
                   </span>
                 </Link>
               </td>

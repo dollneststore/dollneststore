@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CategoryView } from "@/components/product/category-view";
 import { ProductDetail, ProductSkeleton } from "@/components/product/product-detail";
-import { getCategories, getProductBySlug, getShopProducts } from "@/lib/data/catalog";
+import { getCategories, getCategoriesWithCovers, getProductBySlug, getShopProducts } from "@/lib/data/catalog";
 import { buildMetadata } from "@/lib/seo";
 import { categoryPath, categorySeo, productPath, productSeo } from "@/lib/seo-defaults";
 
@@ -19,7 +19,9 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/reborn-dolls/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const category = (await getCategories()).find((c) => c.slug === slug);
+  // Covers fall back to a product photo, so a collection without its own cover still gets
+  // a social sharing image.
+  const category = (await getCategoriesWithCovers()).find((c) => c.slug === slug);
   if (category) {
     const seo = categorySeo(category);
     return buildMetadata({ title: seo.title, description: seo.description, path: categoryPath(slug), image: category.imageUrl });

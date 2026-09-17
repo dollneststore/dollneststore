@@ -14,12 +14,25 @@ const EXTENSIONS: Record<string, string> = {
 };
 
 /**
- * Photo for a customer review: uploaded from the browser straight to Supabase Storage,
- * so the photo lives on our own servers and keeps working if the original is taken down.
- * Uploads go to the products/ folder because the bucket policy only allows admins to write
- * into products/ and guides/.
+ * A single photo (review photo, collection cover): uploaded from the browser straight to
+ * Supabase Storage, so it lives on our own servers and keeps working if the original is taken
+ * down. Uploads go to the products/ folder because the bucket policy only allows admins to
+ * write into products/ and guides/.
+ *
+ * `name` is the form field the server reads, so it stays the same on every card; `id` is what
+ * the label points at, so it has to be unique when several of these share a page.
  */
-export function ReviewPhotoField({ name = "imageUrl", defaultValue = "" }: { name?: string; defaultValue?: string }) {
+export function PhotoField({
+  name = "imageUrl",
+  id,
+  defaultValue = "",
+  uploadLabel = "Upload a photo",
+}: {
+  name?: string;
+  id?: string;
+  defaultValue?: string;
+  uploadLabel?: string;
+}) {
   const [url, setUrl] = useState(defaultValue);
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -70,7 +83,7 @@ export function ReviewPhotoField({ name = "imageUrl", defaultValue = "" }: { nam
           </>
         ) : null}
         <label className="flex cursor-pointer flex-col items-center gap-0.5 rounded-2xl border-2 border-dashed border-lilac-line bg-cream px-4 py-3 text-center text-sm transition-colors hover:border-lilac">
-          <span className="font-bold text-lilac">{busy ? "Uploading…" : url ? "Replace photo" : "Upload the customer's photo"}</span>
+          <span className="font-bold text-lilac">{busy ? "Uploading…" : url ? "Replace photo" : uploadLabel}</span>
           <span className="text-xs text-muted">JPG, PNG, WebP or AVIF · up to 8 MB</span>
           <input
             type="file"
@@ -87,7 +100,7 @@ export function ReviewPhotoField({ name = "imageUrl", defaultValue = "" }: { nam
       </div>
       <input
         ref={inputRef}
-        id={name}
+        id={id ?? name}
         name={name}
         value={url}
         onChange={(event) => setUrl(event.target.value)}

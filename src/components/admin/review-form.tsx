@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { createReview } from "@/lib/admin/actions/reviews";
 import { reviewSources } from "@/lib/types";
 import { adminButton, AdminCard, Field, FormMessage, inputClass } from "./form-ui";
-import { ReviewPhotoField } from "./review-photo-field";
+import { PhotoField } from "./photo-field";
 import { useFormAction } from "./use-form-action";
 
 export function ReviewForm({ products }: { products: { id: string; title: string }[] }) {
@@ -70,7 +70,7 @@ export function ReviewForm({ products }: { products: { id: string; title: string
             error={errors.imageUrl}
             hint="Saved to our own storage, so it keeps working even if the original is taken down."
           >
-            <ReviewPhotoField />
+            <PhotoField uploadLabel="Upload the customer's photo" />
           </Field>
         </div>
         <label className="flex items-center gap-2.5 text-sm font-semibold">

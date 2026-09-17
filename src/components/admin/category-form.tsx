@@ -6,6 +6,7 @@ import { slugify } from "@/lib/format";
 import { categoryDefaults, categoryPath } from "@/lib/seo-defaults";
 import { tints, type Category } from "@/lib/types";
 import { adminButton, AdminCard, Field, FormMessage, inputClass, MobileSaveBar, SaveStatus } from "./form-ui";
+import { PhotoField } from "./photo-field";
 import { SeoFields } from "./seo-fields";
 import { useFormAction } from "./use-form-action";
 
@@ -83,8 +84,13 @@ export function CategoryForm({ category }: { category?: Category }) {
 
       <div className="flex flex-col gap-6 xl:sticky xl:top-6">
         <AdminCard title="Appearance">
-          <Field label="Image URL" htmlFor="imageUrl" error={errors.imageUrl} hint="Copy a photo link from one of your products.">
-            <input id="imageUrl" name="imageUrl" type="url" defaultValue={category?.imageUrl ?? ""} className={inputClass} />
+          <Field
+            label="Cover photo"
+            htmlFor="imageUrl"
+            error={errors.imageUrl}
+            hint="Shown on the home page. Without one, the shop borrows a photo from a product in this collection."
+          >
+            <PhotoField defaultValue={category?.imageUrl ?? ""} uploadLabel="Upload a cover photo" />
           </Field>
           <Field label="Colour" htmlFor="tint" error={errors.tint}>
             <select id="tint" name="tint" defaultValue={category?.tint ?? "rose"} className={inputClass}>
