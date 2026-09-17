@@ -10,11 +10,11 @@ const isDev = process.env.NODE_ENV !== "production";
 // Stripe hosts are allowed ahead of the checkout launch.
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com https://www.googletagmanager.com`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob:${supabaseHost ? ` https://${supabaseHost}` : ""}`,
+  `img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com${supabaseHost ? ` https://${supabaseHost}` : ""}`,
   "font-src 'self' data:",
-  `connect-src 'self' https://api.stripe.com${supabaseHost ? ` https://${supabaseHost} wss://${supabaseHost}` : ""}`,
+  `connect-src 'self' https://api.stripe.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com${supabaseHost ? ` https://${supabaseHost} wss://${supabaseHost}` : ""}`,
   "frame-src https://js.stripe.com https://hooks.stripe.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",

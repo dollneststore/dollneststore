@@ -8,6 +8,8 @@ export const site = {
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://dollneststore.co.uk",
   email: "dollneststore@gmail.com",
   logo: "/brand/logo.jpg",
+  // Google Analytics. A public id, and it only loads once the visitor agrees.
+  analyticsId: "G-QDZ4PQH090",
   whatsapp: {
     number: "447577199805",
     display: "+44 7577 199805",

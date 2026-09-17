@@ -1,5 +1,7 @@
 import { Suspense } from "react";
+import { Analytics } from "@/components/site/analytics";
 import { AnnouncementBar } from "@/components/site/announcement-bar";
+import { ConsentBanner } from "@/components/site/consent-banner";
 import { BottomNav, BottomNavShell } from "@/components/site/bottom-nav";
 import { Footer } from "@/components/site/footer";
 import { Header, HeaderShell } from "@/components/site/header";
@@ -36,6 +38,8 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       <Suspense fallback={null}>
         <WelcomePopup popup={popup} />
       </Suspense>
+      <ConsentBanner />
+      <Analytics />
     </div>
   );
 }

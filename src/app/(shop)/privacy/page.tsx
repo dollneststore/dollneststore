@@ -9,7 +9,7 @@ export function generateMetadata() {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy policy" updated="15 September 2026">
+    <LegalPage title="Privacy policy" updated="17 September 2026">
       <p>
         This policy explains how {site.company.legalName} (&quot;Dollnest&quot;, &quot;we&quot;, &quot;us&quot;) collects and uses
         your personal data when you visit dollneststore.co.uk, place an order or contact us. We are the data controller
@@ -23,6 +23,11 @@ export default function PrivacyPage() {
         <li><strong>Messages</strong> — anything you send us by WhatsApp, email or social media.</li>
         <li><strong>Newsletter</strong> — your email address and when you signed up, if you choose to join.</li>
         <li><strong>Technical data</strong> — basic server logs (such as IP address and browser) kept by our hosting provider for security.</li>
+        <li>
+          <strong>Website statistics</strong> — only if you agree to analytics cookies: pages viewed, roughly where you
+          came from and what device you use, collected through Google Analytics with shortened IP addresses. See our{" "}
+          <Link href="/cookies">cookie policy</Link>.
+        </li>
       </ul>
       <p>Card details are handled by our payment provider and never stored on our systems.</p>
 
@@ -31,6 +36,7 @@ export default function PrivacyPage() {
         <li>To take, deliver and support your order — <em>performance of a contract</em>.</li>
         <li>To keep accounting records — <em>legal obligation</em> (HMRC requires records for 6 years).</li>
         <li>To send our newsletter — <em>consent</em>, which you can withdraw at any time.</li>
+        <li>To measure how the website is used — <em>consent</em>, which you can withdraw at any time on the cookie policy page.</li>
         <li>To keep the website secure and prevent fraud — <em>legitimate interests</em>.</li>
       </ul>
 
@@ -41,6 +47,7 @@ export default function PrivacyPage() {
         <li>Stripe (payment processing), once online checkout is live.</li>
         <li>Delivery companies, to get your parcel to you.</li>
         <li>WhatsApp / Meta, if you choose to message us there.</li>
+        <li>Google (Analytics), only if you agree to analytics cookies.</li>
       </ul>
       <p>
         Some providers may process data outside the UK. Where they do, transfers are protected by UK adequacy
@@ -50,7 +57,8 @@ export default function PrivacyPage() {
       <h2>How long we keep it</h2>
       <p>
         Order records are kept for 6 years for tax purposes. Newsletter data is kept until you unsubscribe. Messages
-        are kept for as long as needed to help you, and no longer than 2 years.
+        are kept for as long as needed to help you, and no longer than 2 years. Website statistics are kept by Google
+        for 14 months.
       </p>
 
       <h2>Your rights</h2>

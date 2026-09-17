@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CloseIcon } from "@/components/icons";
 import { buttonPrimary } from "@/components/ui/styles";
+import { useConsent } from "@/lib/consent";
 import type { PopupSettings } from "@/lib/types";
 
 const STORAGE_KEY = "dollnest.popup.v1";
@@ -20,6 +21,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1
  */
 export function WelcomePopup({ popup }: { popup: PopupSettings }) {
   const pathname = usePathname();
+  const consent = useConsent();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -36,7 +38,9 @@ export function WelcomePopup({ popup }: { popup: PopupSettings }) {
   }, []);
 
   useEffect(() => {
-    if (!popup.enabled || quiet) return;
+    // One thing at a time: the cookie choice is asked first, and the law requires an answer
+    // before anything else is stored on the visitor's device.
+    if (!popup.enabled || quiet || consent === null) return;
     let seenAt = 0;
     try {
       seenAt = Number(window.localStorage.getItem(STORAGE_KEY)) || 0;
@@ -46,7 +50,7 @@ export function WelcomePopup({ popup }: { popup: PopupSettings }) {
     if (Date.now() - seenAt < HIDE_FOR_DAYS * 86400_000) return;
     const timer = window.setTimeout(() => setOpen(true), DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [popup.enabled, quiet]);
+  }, [popup.enabled, quiet, consent]);
 
   // While it is open it behaves like a proper dialog: the page behind can't scroll,
   // Tab stays inside it, Escape closes it and focus goes back where it came from.
