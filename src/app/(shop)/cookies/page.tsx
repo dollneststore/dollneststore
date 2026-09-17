@@ -11,8 +11,10 @@ export default function CookiesPage() {
     <LegalPage title="Cookie policy" updated="17 September 2026">
       <p>
         We use no advertising cookies at all. We do use Google Analytics to understand which babies people look at — but
-        only if you say yes. Nothing analytics-related is stored on your device, and nothing is sent to Google, until
-        you choose &quot;Yes, that&apos;s fine&quot; on the banner. Saying no changes nothing about how the shop works.
+        it stores nothing on your device until you say yes. The Google tag is present on every page so that Google can
+        confirm it is installed correctly, and it starts switched to &quot;denied&quot;: no analytics cookie is written
+        and no identifier is kept about you. Until you answer, Google receives only a basic signal that a page was
+        viewed, with no cookie and a shortened IP address. Saying no changes nothing about how the shop works.
       </p>
 
       <h2>Your choice</h2>
@@ -31,7 +33,8 @@ export default function CookiesPage() {
       <p>
         These are set by Google on our behalf and we see only grouped statistics: pages viewed, roughly where visitors
         came from, and which devices they use. We ask Google to shorten IP addresses, and we never use this data to try
-        to identify you personally. If you choose no, or never answer, these cookies are never set.
+        to identify you personally. If you choose no, or never answer, these cookies are never set — and if you switch
+        analytics off after allowing it, the tag stops storing anything from that moment.
       </p>
 
       <h2>What we store on your device without asking</h2>

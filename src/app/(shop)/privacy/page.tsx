@@ -24,9 +24,10 @@ export default function PrivacyPage() {
         <li><strong>Newsletter</strong> — your email address and when you signed up, if you choose to join.</li>
         <li><strong>Technical data</strong> — basic server logs (such as IP address and browser) kept by our hosting provider for security.</li>
         <li>
-          <strong>Website statistics</strong> — only if you agree to analytics cookies: pages viewed, roughly where you
-          came from and what device you use, collected through Google Analytics with shortened IP addresses. See our{" "}
-          <Link href="/cookies">cookie policy</Link>.
+          <strong>Website statistics</strong> — if you agree to analytics cookies: pages viewed, roughly where you came
+          from and what device you use, collected through Google Analytics with shortened IP addresses. Before you
+          agree, the Google tag is present but stores nothing on your device and sends only a basic, cookieless signal
+          that a page was viewed. See our <Link href="/cookies">cookie policy</Link>.
         </li>
       </ul>
       <p>Card details are handled by our payment provider and never stored on our systems.</p>
