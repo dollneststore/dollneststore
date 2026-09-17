@@ -24,8 +24,12 @@ export function truncate(text: string, max: number) {
   return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[\s,.;:–-]+$/, "")}…`;
 }
 
-export function defaultProductTitle(title: string, accessory = false) {
-  return accessory ? `${title} | Dollnest` : `${title} – Reborn Doll UK | Dollnest`;
+/**
+ * Product names already say "Silicone Reborn Baby Girl, 20 inch", so adding "Reborn Doll UK"
+ * only repeated the words and pushed the title past the ~60 characters Google shows.
+ */
+export function defaultProductTitle(title: string) {
+  return `${title} | Dollnest`;
 }
 
 export function defaultProductDescription(
@@ -46,7 +50,7 @@ export function defaultProductDescription(
 
 export function productSeo(p: Product) {
   return {
-    title: p.seoTitle || defaultProductTitle(p.title, isAccessoryProduct(p)),
+    title: p.seoTitle || defaultProductTitle(p.title),
     description: p.seoDescription || defaultProductDescription(p),
   };
 }
