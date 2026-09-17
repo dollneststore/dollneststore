@@ -43,11 +43,16 @@ export function Hero({ imageUrl, imageAlt }: { imageUrl: string; imageAlt?: stri
         <p className="max-w-[440px] text-[clamp(15px,1.3vw,18px)] leading-relaxed text-pretty text-muted">
           Soft, weighted reborn babies that feel just like a newborn — dressed, wrapped with care and posted free across the UK.
         </p>
-        <div className="mt-1 flex flex-wrap gap-3">
+        {/* One button that asks to be pressed, and a quiet link beside it — with room between
+            them, so the eye isn't offered two equal choices. */}
+        <div className="mt-1 flex flex-wrap items-center gap-x-8 gap-y-3">
           <Link href="/reborn-dolls" className={buttonPrimary}>
             Shop babies ♡
           </Link>
-          <Link href="/#collections" className="px-5 py-[15px] text-[15px] font-bold text-lilac hover:underline">
+          <Link
+            href="/#collections"
+            className="text-[15px] font-semibold text-muted underline-offset-4 transition-colors hover:text-lilac hover:underline"
+          >
             Explore collections →
           </Link>
         </div>
