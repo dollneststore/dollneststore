@@ -41,7 +41,7 @@ export const site = {
 export const defaultSocials: Socials = {
   tiktok: "https://www.tiktok.com/@dollneststore",
   etsy: "https://dollneststore.etsy.com",
-  vinted: "https://www.vinted.co.uk/member/dollnest",
+  vinted: "https://www.vinted.co.uk/member/294261048-dollnest",
 };
 
 export const defaultAnnouncement = "Free tracked UK delivery on every baby ♡ Dispatched within 48 hours";
