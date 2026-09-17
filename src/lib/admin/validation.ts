@@ -38,12 +38,23 @@ const optionalHttpsUrl = z
   .union([z.literal(""), z.url({ protocol: /^https$/, error: "Use a full https:// link" })])
   .transform((v) => v || null);
 
+/** A photo shipped with the site itself, e.g. /photos/reborn-baby-girl.jpg. */
+const SITE_PHOTO = /^\/photos\/[a-z0-9][a-z0-9-]*\.(jpg|jpeg|png|webp|avif)$/i;
+
 /**
- * Only this project's own public Supabase storage. Etsy's CDN is deliberately not accepted:
- * the shop must keep working when a listing is removed from Etsy, so new photos are stored here.
+ * Only photos we serve ourselves: this project's public Supabase storage, or a file shipped in
+ * the site's own /photos folder. Etsy's CDN is deliberately not accepted — the shop must keep
+ * working when a listing is removed from Etsy, so new photos are stored here.
  */
 function isAllowedImageUrl(value: string) {
-  const url = new URL(value);
+  if (value.startsWith("/")) return SITE_PHOTO.test(value);
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:") return false;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   return Boolean(
     supabaseUrl && url.hostname === new URL(supabaseUrl).hostname && url.pathname.startsWith("/storage/v1/object/public/"),
@@ -51,12 +62,13 @@ function isAllowedImageUrl(value: string) {
 }
 
 const optionalImageUrl = z
-  .union([
-    z.literal(""),
-    z
-      .url({ protocol: /^https$/, error: "Use a full https:// link" })
-      .refine(isAllowedImageUrl, "Use a photo link from your own storage — upload the photo on a product first, then copy its link"),
-  ])
+  .string()
+  .trim()
+  .max(500)
+  .refine(
+    (v) => v === "" || isAllowedImageUrl(v),
+    "Use a photo from your own storage (upload it here), or a /photos/… file that ships with the site",
+  )
   .transform((v) => v || null);
 
 const optionalUuid = z.union([z.literal(""), z.uuid()]).transform((v) => v || null);

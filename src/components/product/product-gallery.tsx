@@ -7,6 +7,9 @@ import type { ProductImage } from "@/lib/types";
 export function ProductGallery({ images, title }: { images: ProductImage[]; title: string }) {
   const [active, setActive] = useState(0);
   const current = images[active] ?? images[0];
+  // Every photo gets describing text, not just the first: it is what image search reads,
+  // and most imported photos have no description of their own.
+  const describe = (image: ProductImage, index: number) => image.alt?.trim() || `${title} – photo ${index + 1}`;
 
   return (
     <div className="flex flex-col gap-3">
@@ -15,7 +18,7 @@ export function ProductGallery({ images, title }: { images: ProductImage[]; titl
           <Image
             key={current.url}
             src={current.url}
-            alt={current.alt ?? title}
+            alt={describe(current, active)}
             fill
             preload
             sizes="(min-width: 1024px) 55vw, 100vw"
@@ -36,7 +39,8 @@ export function ProductGallery({ images, title }: { images: ProductImage[]; titl
                   index === active ? "border-lilac" : "border-transparent opacity-80 hover:opacity-100"
                 }`}
               >
-                <Image src={img.url} alt="" fill sizes="120px" className="object-cover" />
+                {/* The button carries the spoken label, so this text is here for image search. */}
+                <Image src={img.url} alt={describe(img, index)} fill sizes="120px" className="object-cover" />
               </button>
             </li>
           ))}

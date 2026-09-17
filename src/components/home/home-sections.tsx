@@ -366,7 +366,7 @@ export function SocialSection({ images, socials }: { images: string[]; socials: 
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Watch Dollnest on TikTok"
-              className={`relative block aspect-[9/13] overflow-hidden rounded-[50%_50%_16px_16px] ${socialTints[i % socialTints.length]}`}
+              className={`relative block aspect-square overflow-hidden rounded-[20px] ${socialTints[i % socialTints.length]}`}
             >
               <Image src={src} alt="" fill sizes="200px" className="object-cover transition-transform duration-500 hover:scale-[1.04]" />
             </a>
