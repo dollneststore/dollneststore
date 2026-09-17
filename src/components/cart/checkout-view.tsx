@@ -1,34 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-import { applyDiscountCode } from "@/app/actions/discount";
 import { WhatsAppIcon } from "@/components/icons";
 import { buttonOutline, buttonPrimary, card } from "@/components/ui/styles";
 import { formatPrice } from "@/lib/format";
 import { whatsappUrl } from "@/lib/site";
 import { DiscountField } from "./discount-field";
 import { useCart, useHydrated } from "./use-cart";
-import { discountActions, discountPence, useDiscount } from "./use-discount";
+import { discountPence, useDiscount } from "./use-discount";
 
 export function CheckoutView({ etsyUrl }: { etsyUrl: string }) {
   const hydrated = useHydrated();
   const { items, subtotalPence } = useCart();
   const { discount } = useDiscount();
   const saving = discountPence(subtotalPence, discount);
-  const rechecked = useRef(false);
-
-  // The discount is kept in this browser, so before it reaches an order message the server
-  // checks the code once more: anything expired — or never issued — is dropped here.
-  useEffect(() => {
-    if (!discount || rechecked.current) return;
-    rechecked.current = true;
-    const form = new FormData();
-    form.set("code", discount.code);
-    void applyDiscountCode(null, form).then((result) => {
-      if (!result?.ok) discountActions.clear();
-    });
-  }, [discount]);
 
   if (!hydrated) {
     return <div className="h-64 animate-pulse rounded-[22px] bg-white/70" aria-hidden />;

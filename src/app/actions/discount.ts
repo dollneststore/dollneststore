@@ -22,7 +22,9 @@ export async function applyDiscountCode(_prev: DiscountState, formData: FormData
   if (!parsed.success) return { ok: false, message: "Enter your discount code." };
 
   // Fails closed: without a working limiter, codes could be guessed without any brake.
-  if ((await checkRateLimit("discount", await clientIp(), 20, 60 * 60)) !== "allowed") {
+  // 40 an hour: enough for a shopper whose basket re-checks their code on each visit,
+  // far too slow to guess one.
+  if ((await checkRateLimit("discount", await clientIp(), 40, 60 * 60)) !== "allowed") {
     return { ok: false, message: "Too many tries from this connection. Please try again later." };
   }
 
@@ -36,7 +38,9 @@ export async function applyDiscountCode(_prev: DiscountState, formData: FormData
   }
 
   const row = (Array.isArray(data) ? data[0] : data) as { code: string; percent_off: number } | undefined;
-  if (!row) return { ok: false, message: "That code isn't valid any more." };
+  // Deliberately the same wording for unknown, switched-off, expired and not-yet-started codes,
+  // so nobody can tell from the reply which codes exist.
+  if (!row) return { ok: false, message: "Sorry, we can't use that code." };
 
   return { ok: true, message: `${row.percent_off}% off applied ♡`, code: row.code, percentOff: row.percent_off };
 }

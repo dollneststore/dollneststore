@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { applyDiscountCode, type DiscountState } from "@/app/actions/discount";
 import { discountActions, useDiscount } from "./use-discount";
 
@@ -10,6 +10,25 @@ import { discountActions, useDiscount } from "./use-discount";
  */
 export function DiscountField() {
   const { discount, clear } = useDiscount();
+  const verified = useRef(false);
+
+  // The basket lives in this browser, so a stored discount is checked with the server once per
+  // page: the server's percentage replaces whatever is in storage, and a code that is no longer
+  // usable is dropped. Without this, an edited localStorage value would be believed.
+  useEffect(() => {
+    if (!discount || verified.current) return;
+    verified.current = true;
+    const form = new FormData();
+    form.set("code", discount.code);
+    void applyDiscountCode(null, form).then((result) => {
+      if (result?.ok && result.code && result.percentOff) {
+        discountActions.apply({ code: result.code, percentOff: result.percentOff });
+      } else {
+        discountActions.clear();
+      }
+    });
+  }, [discount]);
+
   const [state, formAction, pending] = useActionState(async (prev: DiscountState, formData: FormData) => {
     const result = await applyDiscountCode(prev, formData);
     if (result?.ok && result.code && result.percentOff) {
@@ -43,6 +62,8 @@ export function DiscountField() {
           maxLength={24}
           autoComplete="off"
           placeholder="WELCOME10"
+          aria-invalid={state && !state.ok ? true : undefined}
+          aria-describedby={state && !state.ok ? "discount-error" : undefined}
           className="min-w-0 flex-1 rounded-full border border-line bg-white px-4 py-2 text-sm uppercase outline-none focus:border-lilac"
         />
         <button
@@ -54,7 +75,7 @@ export function DiscountField() {
         </button>
       </div>
       {state && !state.ok ? (
-        <p role="alert" className="text-xs font-semibold text-rose">
+        <p id="discount-error" role="alert" className="text-xs font-semibold text-rose">
           {state.message}
         </p>
       ) : null}

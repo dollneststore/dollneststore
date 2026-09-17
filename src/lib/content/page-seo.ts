@@ -14,7 +14,7 @@ export const pageSeoDefaults = {
   },
   "/reviews": {
     label: "Reviews",
-    title: "Dollnest Reviews – What Families Say About Our Reborn Dolls",
+    title: "Reborn Doll Reviews – Real Photos from UK Families | Dollnest",
     description:
       "Real reviews from families who have welcomed a Dollnest reborn baby home, with their own photos, from Etsy, Vinted and eBay.",
   },

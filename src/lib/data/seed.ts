@@ -2,14 +2,15 @@
 // Used as a fallback when Supabase is not configured, and by `pnpm db:seed`.
 import type { Category, Product, Review } from "@/lib/types";
 
-const IL = (h: string, id: string, s: string) =>
-  `https://i.etsystatic.com/64552494/r/il/${h}/${id}/il_794xN.${id}_${s}.jpg`;
+// Placeholder for the local fallback catalogue: the real photos live in Supabase Storage,
+// and the shop no longer loads anything from Etsy.
+const PHOTO = "/brand/logo.jpg";
 
 export const seedCategories: Category[] = ([
-  { slug: "silicone", name: "Silicone babies", description: "Floppy & squishy", imageUrl: IL("5d8709", "7901487361", "9phl"), tint: "rose", sortOrder: 1 },
-  { slug: "cloth-body", name: "Cloth-body", description: "Soft body, vinyl limbs", imageUrl: IL("bbf807", "8510061144", "aebd"), tint: "lilac", sortOrder: 2 },
-  { slug: "mini", name: "Mini reborns", description: "12 inch", imageUrl: IL("f39bcc", "8302450043", "opx8"), tint: "peach", sortOrder: 3 },
-  { slug: "weighted", name: "Weighted", description: "Approx. 5 lbs", imageUrl: IL("e54c15", "8510092476", "bdqo"), tint: "sage", sortOrder: 4 },
+  { slug: "silicone", name: "Silicone babies", description: "Floppy & squishy", imageUrl: PHOTO, tint: "rose", sortOrder: 1 },
+  { slug: "cloth-body", name: "Cloth-body", description: "Soft body, vinyl limbs", imageUrl: PHOTO, tint: "lilac", sortOrder: 2 },
+  { slug: "mini", name: "Mini reborns", description: "12 inch", imageUrl: PHOTO, tint: "peach", sortOrder: 3 },
+  { slug: "weighted", name: "Weighted", description: "Approx. 5 lbs", imageUrl: PHOTO, tint: "sage", sortOrder: 4 },
 ] as Omit<Category, "intro" | "seoTitle" | "seoDescription">[]).map((c) => ({
   ...c,
   intro: null,
@@ -35,7 +36,7 @@ export const seedProducts: Product[] = ([
     badge: "New arrival",
     sortOrder: 1,
     etsyListingId: "4575049995",
-    images: [{ url: "https://i.etsystatic.com/64552494/r/il/fc8c68/8569833355/il_794xN.8569833355_demo.jpg", alt: "New silicone baby girl" }],
+    images: [{ url: "/brand/logo.jpg", alt: "New silicone baby girl" }],
   },
   {
     id: "seed-4514005835",
@@ -54,7 +55,7 @@ export const seedProducts: Product[] = ([
     badge: "Best seller",
     sortOrder: 2,
     etsyListingId: "4514005835",
-    images: [{ url: "https://i.etsystatic.com/64552494/r/il/774c53/8128453201/il_794xN.8128453201_t3jj.jpg", alt: "Silicone baby girl" }],
+    images: [{ url: "/brand/logo.jpg", alt: "Silicone baby girl" }],
   },
   {
     id: "seed-4479306735",
@@ -73,7 +74,7 @@ export const seedProducts: Product[] = ([
     badge: "Limited",
     sortOrder: 3,
     etsyListingId: "4479306735",
-    images: [{ url: "https://i.etsystatic.com/64552494/r/il/4c2617/7901487599/il_794xN.7901487599_jnda.jpg", alt: "Floppy silicone baby girl" }],
+    images: [{ url: "/brand/logo.jpg", alt: "Floppy silicone baby girl" }],
   },
   {
     id: "seed-4557905318",
@@ -92,7 +93,7 @@ export const seedProducts: Product[] = ([
     badge: "New arrival",
     sortOrder: 4,
     etsyListingId: "4557905318",
-    images: [{ url: "https://i.etsystatic.com/64552494/r/il/be3cdb/8397273864/il_794xN.8397273864_ahus.jpg", alt: "Silicone baby boy" }],
+    images: [{ url: "/brand/logo.jpg", alt: "Silicone baby boy" }],
   },
   {
     id: "seed-4575022215",
@@ -111,7 +112,7 @@ export const seedProducts: Product[] = ([
     badge: null,
     sortOrder: 5,
     etsyListingId: "4575022215",
-    images: [{ url: "https://i.etsystatic.com/64552494/r/il/7547b7/8569555837/il_794xN.8569555837_izek.jpg", alt: "Silicone baby girl, 20 inch" }],
+    images: [{ url: "/brand/logo.jpg", alt: "Silicone baby girl, 20 inch" }],
   },
   {
     id: "seed-4574535285",
@@ -130,7 +131,7 @@ export const seedProducts: Product[] = ([
     badge: null,
     sortOrder: 6,
     etsyListingId: "4574535285",
-    images: [{ url: "https://i.etsystatic.com/64552494/r/il/e8cb3f/8565892081/il_794xN.8565892081_nbj6.jpg", alt: "Squishy silicone baby girl" }],
+    images: [{ url: "/brand/logo.jpg", alt: "Squishy silicone baby girl" }],
   },
   {
     id: "seed-4574514709",
@@ -149,7 +150,7 @@ export const seedProducts: Product[] = ([
     badge: null,
     sortOrder: 7,
     etsyListingId: "4574514709",
-    images: [{ url: "https://i.etsystatic.com/64552494/r/il/b51f92/8517879904/il_794xN.8517879904_44i3.jpg", alt: "Heavy silicone baby girl" }],
+    images: [{ url: "/brand/logo.jpg", alt: "Heavy silicone baby girl" }],
   },
   {
     id: "seed-4573799174",
@@ -168,7 +169,7 @@ export const seedProducts: Product[] = ([
     badge: null,
     sortOrder: 8,
     etsyListingId: "4573799174",
-    images: [{ url: "https://i.etsystatic.com/64552494/r/il/818363/8512383076/il_794xN.8512383076_9qol.jpg", alt: "Sleepy silicone baby girl" }],
+    images: [{ url: "/brand/logo.jpg", alt: "Sleepy silicone baby girl" }],
   },
   {
     id: "seed-4573469287",
@@ -187,7 +188,7 @@ export const seedProducts: Product[] = ([
     badge: "Gentle & sweet",
     sortOrder: 9,
     etsyListingId: "4573469287",
-    images: [{ url: "https://i.etsystatic.com/64552494/r/il/d72d89/8560357021/il_794xN.8560357021_dmh3.jpg", alt: "Weighted reborn baby" }],
+    images: [{ url: "/brand/logo.jpg", alt: "Weighted reborn baby" }],
   },
   {
     id: "seed-4563757754",
@@ -206,7 +207,7 @@ export const seedProducts: Product[] = ([
     badge: "Great first doll",
     sortOrder: 10,
     etsyListingId: "4563757754",
-    images: [{ url: "https://i.etsystatic.com/64552494/r/il/b1256f/8487836675/il_794xN.8487836675_q55g.jpg", alt: "Cloth-body reborn baby" }],
+    images: [{ url: "/brand/logo.jpg", alt: "Cloth-body reborn baby" }],
   },
 ] as Omit<Product, "seoTitle" | "seoDescription" | "updatedAt">[]).map((p) => ({
   ...p,
@@ -222,11 +223,11 @@ export const seedReviews: Review[] = [
 ];
 
 export const seedSocialImages: string[] = [
-  IL("a7aa66", "7785816119", "cyg1"),
-  IL("65c1ef", "7901487365", "a3cy"),
-  IL("8b21b7", "8397273862", "5v6z"),
-  IL("edd75c", "8302449991", "emro"),
-  IL("64218e", "8510061134", "4dbx"),
+  PHOTO,
+  PHOTO,
+  PHOTO,
+  PHOTO,
+  PHOTO,
 ];
 
-export const heroImage = IL("774c53", "8128453201", "t3jj");
+export const heroImage = PHOTO;

@@ -12,7 +12,7 @@ const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: https://i.etsystatic.com${supabaseHost ? ` https://${supabaseHost}` : ""}`,
+  `img-src 'self' data: blob:${supabaseHost ? ` https://${supabaseHost}` : ""}`,
   "font-src 'self' data:",
   `connect-src 'self' https://api.stripe.com${supabaseHost ? ` https://${supabaseHost} wss://${supabaseHost}` : ""}`,
   "frame-src https://js.stripe.com https://hooks.stripe.com",
@@ -40,8 +40,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     formats: ["image/avif", "image/webp"],
+    // Only our own storage: every photo was copied here, and the admin panel no longer
+    // accepts an Etsy link, so the door stays shut.
     remotePatterns: [
-      { protocol: "https", hostname: "i.etsystatic.com" },
       ...(supabaseHost
         ? [{ protocol: "https" as const, hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }]
         : []),
