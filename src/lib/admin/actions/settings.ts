@@ -12,6 +12,7 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
   const { supabase } = await adminContext();
   const parsed = settingsSchema.safeParse({
     announcement: field(formData, "announcement"),
+    heroImageUrl: field(formData, "heroImageUrl"),
     popupEnabled: formData.get("popupEnabled") === "on",
     popupHeading: field(formData, "popupHeading"),
     popupBody: field(formData, "popupBody"),
@@ -26,7 +27,7 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
 
   // Empty strings are stored on purpose: they hide the announcement bar / a social link
   // (a missing value falls back to the built-in default).
-  const { announcement, popupEnabled, popupHeading, popupBody, popupCode, ...socials } = parsed.data;
+  const { announcement, heroImageUrl, popupEnabled, popupHeading, popupBody, popupCode, ...socials } = parsed.data;
 
   if (popupEnabled && popupCode) {
     // A pop-up advertising a code that doesn't work would be worse than no pop-up.
@@ -48,6 +49,7 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
       popup_heading: popupHeading || null,
       popup_body: popupBody || null,
       popup_code: popupCode,
+      hero_image_url: heroImageUrl,
     })
     .eq("id", 1);
   if (error) {

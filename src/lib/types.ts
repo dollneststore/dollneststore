@@ -117,6 +117,8 @@ export type SiteSettings = {
   socials: Socials;
   googleSiteVerification: string | null;
   popup: PopupSettings;
+  /** The big photo at the top of the home page. Empty means "use the first featured baby". */
+  heroImageUrl: string | null;
 };
 
 export type DiscountCode = {

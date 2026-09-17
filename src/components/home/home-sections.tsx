@@ -62,10 +62,10 @@ export function Hero({ imageUrl, imageAlt }: { imageUrl: string; imageAlt?: stri
         </ul>
       </div>
 
-      <div className="relative mx-auto aspect-[1/1.1] w-full max-w-[510px]">
-        <div className="absolute inset-0 rounded-[50%_50%_36px_36px] border-[1.5px] border-dashed border-lilac-line" />
-        <div className="absolute inset-3.5 rounded-[50%_50%_28px_28px] bg-[linear-gradient(160deg,var(--color-lilac-soft),var(--color-rose-soft))]" />
-        <div className="absolute inset-[30px] overflow-hidden rounded-[50%_50%_16px_16px]">
+      <div className="relative mx-auto aspect-square w-full max-w-[510px]">
+        <div className="absolute inset-0 rounded-[34px] border-[1.5px] border-dashed border-lilac-line" />
+        <div className="absolute inset-3.5 rounded-[28px] bg-[linear-gradient(160deg,var(--color-lilac-soft),var(--color-rose-soft))]" />
+        <div className="absolute inset-[30px] overflow-hidden rounded-[20px]">
           <Image
             src={imageUrl}
             alt={imageAlt ?? "A sleeping reborn baby dressed with care"}

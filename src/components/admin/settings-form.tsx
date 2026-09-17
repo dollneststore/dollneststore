@@ -3,6 +3,7 @@
 import { saveSettings } from "@/lib/admin/actions/settings";
 import type { SiteSettings } from "@/lib/types";
 import { adminButton, AdminCard, Field, FormMessage, inputClass, MobileSaveBar, SaveStatus } from "./form-ui";
+import { PhotoField } from "./photo-field";
 import { useFormAction } from "./use-form-action";
 
 // eBay is mentioned in the shop copy but never linked (we sell other things there),
@@ -27,6 +28,17 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
           hint="Shown at the very top of every page. Max 160 characters. Leave empty to hide the bar."
         >
           <input id="announcement" name="announcement" maxLength={160} defaultValue={settings.announcement} className={inputClass} />
+        </Field>
+      </AdminCard>
+
+      <AdminCard title="Home page photo">
+        <Field
+          label="Main photo"
+          htmlFor="heroImageUrl"
+          error={errors.heroImageUrl}
+          hint="The big photo at the top of the home page. Leave it empty to use the first featured baby."
+        >
+          <PhotoField name="heroImageUrl" defaultValue={settings.heroImageUrl ?? ""} uploadLabel="Upload the main photo" />
         </Field>
       </AdminCard>
 

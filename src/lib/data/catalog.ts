@@ -160,16 +160,24 @@ export type SettingsRow = {
   popup_heading?: string | null;
   popup_body?: string | null;
   popup_code?: string | null;
+  hero_image_url?: string | null;
 };
 
-export const SETTINGS_COLUMNS = "announcement, socials, google_site_verification, popup_enabled, popup_heading, popup_body, popup_code";
+export const SETTINGS_COLUMNS =
+  "announcement, socials, google_site_verification, popup_enabled, popup_heading, popup_body, popup_code, hero_image_url";
 
 /** The shape before the pop-up migration; used only as a fallback while that migration is pending. */
 export const LEGACY_SETTINGS_COLUMNS = "announcement, socials, google_site_verification";
 
 export function resolveSettings(data: SettingsRow | null): SiteSettings {
   if (!data) {
-    return { announcement: defaultAnnouncement, socials: defaultSocials, googleSiteVerification: null, popup: defaultPopup };
+    return {
+      announcement: defaultAnnouncement,
+      socials: defaultSocials,
+      googleSiteVerification: null,
+      popup: defaultPopup,
+      heroImageUrl: null,
+    };
   }
   const saved = (data.socials ?? {}) as Partial<Record<keyof Socials, string>>;
   const socials = Object.fromEntries(
@@ -187,6 +195,7 @@ export function resolveSettings(data: SettingsRow | null): SiteSettings {
       body: data.popup_body || defaultPopup.body,
       code,
     },
+    heroImageUrl: data.hero_image_url || null,
   };
 }
 

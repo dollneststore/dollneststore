@@ -98,7 +98,10 @@ export default async function HomePage() {
       <JsonLd data={organization} />
       <JsonLd data={website} />
       <JsonLd data={faqPage} />
-      {heroProduct ? (
+      {/* The photo chosen in /admin/settings wins; otherwise the first featured baby. */}
+      {settings.heroImageUrl ? (
+        <Hero imageUrl={settings.heroImageUrl} />
+      ) : heroProduct ? (
         <Hero imageUrl={heroProduct.images[0].url} imageAlt={heroProduct.images[0].alt ?? heroProduct.title} />
       ) : null}
       <FeaturedBabies products={featured} />

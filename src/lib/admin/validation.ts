@@ -201,6 +201,7 @@ export const discountSchema = z.object({
 
 export const settingsSchema = z.object({
   announcement: text(160),
+  heroImageUrl: optionalImageUrl,
   popupEnabled: z.boolean(),
   popupHeading: text(80),
   popupBody: text(240),
