@@ -4,7 +4,8 @@ import { Suspense } from "react";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { LoadingBlock, PageHeader } from "@/components/admin/form-ui";
 import { ReviewForm } from "@/components/admin/review-form";
-import { deleteReview, setReviewPublished } from "@/lib/admin/actions/reviews";
+import { ReviewPhotoField } from "@/components/admin/review-photo-field";
+import { deleteReview, setReviewPhoto, setReviewPublished } from "@/lib/admin/actions/reviews";
 import { getAdminReviews, getReviewProductOptions } from "@/lib/admin/queries";
 import { formatDate } from "@/lib/format";
 
@@ -50,6 +51,18 @@ async function Reviews() {
                   </span>
                 </div>
                 <p className="text-sm leading-relaxed text-[#6b5a60]">{r.body}</p>
+                <details className="pt-1">
+                  <summary className="cursor-pointer text-xs font-bold text-lilac">
+                    {r.imageUrl ? "Replace photo" : "Add a photo"}
+                  </summary>
+                  <form action={setReviewPhoto} className="mt-2 flex flex-col gap-2">
+                    <input type="hidden" name="id" value={r.id} />
+                    <ReviewPhotoField defaultValue={r.imageUrl ?? ""} name={`imageUrl-${r.id}`} />
+                    <button type="submit" className="w-fit text-xs font-bold text-lilac hover:underline">
+                      Save photo
+                    </button>
+                  </form>
+                </details>
                 <div className="mt-auto flex gap-4 pt-2 text-xs font-bold">
                   <form action={setReviewPublished}>
                     <input type="hidden" name="id" value={r.id} />

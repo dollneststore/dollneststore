@@ -170,6 +170,12 @@ export const reviewSchema = z.object({
   isPublished: z.boolean(),
 });
 
+/** Adding or replacing the photo on a review that already exists. */
+export const reviewPhotoSchema = z.object({
+  id: z.uuid(),
+  imageUrl: optionalImageUrl,
+});
+
 export const settingsSchema = z.object({
   announcement: text(160),
   tiktok: optionalHttpsUrl,

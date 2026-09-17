@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 import { z } from "zod";
 import { adminContext } from "@/lib/admin/context";
 import type { FormState } from "@/lib/admin/form-state";
-import { reviewSchema } from "@/lib/admin/validation";
+import { reviewPhotoSchema, reviewSchema } from "@/lib/admin/validation";
 
 const field = (formData: FormData, key: string) => String(formData.get(key) ?? "");
 
@@ -42,6 +42,18 @@ export async function createReview(_prev: FormState, formData: FormData): Promis
 
   updateTag("reviews");
   return { ok: true, message: "Review added ♡" };
+}
+
+/** Adds, replaces or clears the customer photo on a review that is already saved. */
+export async function setReviewPhoto(formData: FormData) {
+  const { supabase } = await adminContext();
+  const { id, imageUrl } = reviewPhotoSchema.parse({
+    id: formData.get("id"),
+    imageUrl: String(formData.get("imageUrl") ?? ""),
+  });
+  const { error } = await supabase.from("reviews").update({ image_url: imageUrl }).eq("id", id);
+  if (error) throw new Error("Could not save the photo");
+  updateTag("reviews");
 }
 
 export async function setReviewPublished(formData: FormData) {

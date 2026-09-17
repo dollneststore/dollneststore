@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { createReview } from "@/lib/admin/actions/reviews";
 import { reviewSources } from "@/lib/types";
 import { adminButton, AdminCard, Field, FormMessage, inputClass } from "./form-ui";
+import { ReviewPhotoField } from "./review-photo-field";
 import { useFormAction } from "./use-form-action";
 
 export function ReviewForm({ products }: { products: { id: string; title: string }[] }) {
@@ -63,8 +64,13 @@ export function ReviewForm({ products }: { products: { id: string; title: string
           <Field label="Date" htmlFor="reviewedAt" error={errors.reviewedAt}>
             <input id="reviewedAt" name="reviewedAt" type="date" className={inputClass} />
           </Field>
-          <Field label="Photo URL (optional)" htmlFor="imageUrl" error={errors.imageUrl} hint="Paste a link from your own photo storage (upload it on a product first).">
-            <input id="imageUrl" name="imageUrl" type="url" placeholder="https://" className={inputClass} />
+          <Field
+            label="Customer photo (optional)"
+            htmlFor="imageUrl"
+            error={errors.imageUrl}
+            hint="Saved to our own storage, so it keeps working even if the original is taken down."
+          >
+            <ReviewPhotoField />
           </Field>
         </div>
         <label className="flex items-center gap-2.5 text-sm font-semibold">
