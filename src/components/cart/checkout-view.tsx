@@ -5,11 +5,15 @@ import { WhatsAppIcon } from "@/components/icons";
 import { buttonOutline, buttonPrimary, card } from "@/components/ui/styles";
 import { formatPrice } from "@/lib/format";
 import { whatsappUrl } from "@/lib/site";
+import { DiscountField } from "./discount-field";
 import { useCart, useHydrated } from "./use-cart";
+import { discountPence, useDiscount } from "./use-discount";
 
 export function CheckoutView({ etsyUrl }: { etsyUrl: string }) {
   const hydrated = useHydrated();
   const { items, subtotalPence } = useCart();
+  const { discount } = useDiscount();
+  const saving = discountPence(subtotalPence, discount);
 
   if (!hydrated) {
     return <div className="h-64 animate-pulse rounded-[22px] bg-white/70" aria-hidden />;
@@ -29,7 +33,8 @@ export function CheckoutView({ etsyUrl }: { etsyUrl: string }) {
   const message = [
     "Hi Dollnest! I'd like to order:",
     ...items.map((i) => `• ${i.title} × ${i.qty} — ${formatPrice(i.pricePence * i.qty)}`),
-    `Total: ${formatPrice(subtotalPence)} (free UK delivery)`,
+    ...(saving > 0 ? [`Discount code ${discount?.code}: −${formatPrice(saving)}`] : []),
+    `Total: ${formatPrice(subtotalPence - saving)} (free UK delivery)`,
     "",
     "My name:",
     "Delivery postcode:",
@@ -69,10 +74,17 @@ export function CheckoutView({ etsyUrl }: { etsyUrl: string }) {
             </li>
           ))}
         </ul>
+        {saving > 0 ? (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted">Discount ({discount?.code})</span>
+            <span className="font-bold text-sage-deep">−{formatPrice(saving)}</span>
+          </div>
+        ) : null}
         <div className="flex justify-between border-t border-line pt-3">
           <span className="font-bold">Total</span>
-          <span className="font-bold text-lilac">{formatPrice(subtotalPence)}</span>
+          <span className="font-bold text-lilac">{formatPrice(subtotalPence - saving)}</span>
         </div>
+        <DiscountField />
         <Link href="/basket" className="text-center text-sm font-bold text-lilac hover:underline">
           ← Edit basket
         </Link>

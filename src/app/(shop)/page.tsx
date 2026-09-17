@@ -33,7 +33,7 @@ export default async function HomePage() {
   const reviews = [...latestReviews]
     .filter((r) => r.rating >= 4 && r.body.trim().length > 20)
     .sort((a, b) => b.rating - a.rating || Number(Boolean(b.imageUrl)) - Number(Boolean(a.imageUrl)))
-    .slice(0, 3);
+    .slice(0, 6);
 
   const fromPrices: Record<string, number> = {};
   for (const p of products) {

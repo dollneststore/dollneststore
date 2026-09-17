@@ -1,4 +1,4 @@
-import type { Socials } from "@/lib/types";
+import type { PopupSettings, Socials } from "@/lib/types";
 
 export const site = {
   name: "Dollnest",
@@ -45,6 +45,14 @@ export const defaultSocials: Socials = {
 };
 
 export const defaultAnnouncement = "Free tracked UK delivery on every baby ♡ Dispatched within 48 hours";
+
+/** Used until the pop-up is set up in /admin/settings. It stays hidden while it has no code. */
+export const defaultPopup: PopupSettings = {
+  enabled: false,
+  heading: "10% off your first baby ♡",
+  body: "Use your code at checkout for 10% off your first order, and we'll send you new babies before anyone else.",
+  code: "",
+};
 
 export function whatsappUrl(message = "Hi Dollnest! I'd love to ask about one of your reborn babies ♡") {
   return `https://wa.me/${site.whatsapp.number}?text=${encodeURIComponent(message)}`;

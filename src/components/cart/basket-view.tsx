@@ -4,11 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { buttonPrimary, card } from "@/components/ui/styles";
 import { formatPrice } from "@/lib/format";
+import { DiscountField } from "./discount-field";
 import { useCart, useHydrated } from "./use-cart";
+import { discountPence, useDiscount } from "./use-discount";
 
 export function BasketView() {
   const hydrated = useHydrated();
   const { items, subtotalPence, setQty, remove } = useCart();
+  const { discount } = useDiscount();
+  const saving = discountPence(subtotalPence, discount);
 
   if (!hydrated) {
     return <div className="h-64 animate-pulse rounded-[22px] bg-white/70" aria-hidden />;
@@ -83,15 +87,22 @@ export function BasketView() {
             <dt className="text-muted">Subtotal</dt>
             <dd className="font-bold">{formatPrice(subtotalPence)}</dd>
           </div>
+          {saving > 0 ? (
+            <div className="flex justify-between">
+              <dt className="text-muted">Discount ({discount?.code})</dt>
+              <dd className="font-bold text-sage-deep">−{formatPrice(saving)}</dd>
+            </div>
+          ) : null}
           <div className="flex justify-between">
             <dt className="text-muted">Tracked UK delivery</dt>
             <dd className="font-bold text-sage-deep">Free</dd>
           </div>
           <div className="flex justify-between border-t border-line pt-3 text-base">
             <dt className="font-bold">Total</dt>
-            <dd className="font-bold text-lilac">{formatPrice(subtotalPence)}</dd>
+            <dd className="font-bold text-lilac">{formatPrice(subtotalPence - saving)}</dd>
           </div>
         </dl>
+        <DiscountField />
         <Link href="/checkout" className={`${buttonPrimary} mt-2 w-full`}>
           Continue to checkout
         </Link>

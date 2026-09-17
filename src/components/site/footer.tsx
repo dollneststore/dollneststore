@@ -77,6 +77,7 @@ export async function Footer() {
 
           <nav aria-label="Help" className="flex flex-col gap-2.5 text-sm">
             <p className={heading}>Help</p>
+            <Link href="/reviews" className="hover:text-lilac">Customer reviews</Link>
             <Link href="/guides" className="hover:text-lilac">Guides & care tips</Link>
             <Link href="/delivery-returns" className="hover:text-lilac">Delivery & returns</Link>
             <Link href="/#faq" className="hover:text-lilac">FAQ</Link>

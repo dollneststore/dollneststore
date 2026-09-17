@@ -1,7 +1,7 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { isAccessoryProduct } from "@/lib/seo-defaults";
-import { defaultAnnouncement, defaultSocials } from "@/lib/site";
+import { defaultAnnouncement, defaultPopup, defaultSocials } from "@/lib/site";
 import { createPublicClient } from "@/lib/supabase/public";
 import type { Category, Guide, PageSeo, Product, ProductReviewStats, Review, SiteSettings, Socials } from "@/lib/types";
 import {
@@ -152,16 +152,41 @@ export async function getProductReviewStats(): Promise<Record<string, ProductRev
  * A value that was never saved falls back to the built-in default;
  * an explicitly saved empty string means "hide it".
  */
-export function resolveSettings(data: { announcement: string | null; socials: unknown; google_site_verification?: string | null } | null): SiteSettings {
-  if (!data) return { announcement: defaultAnnouncement, socials: defaultSocials, googleSiteVerification: null };
+export type SettingsRow = {
+  announcement: string | null;
+  socials: unknown;
+  google_site_verification?: string | null;
+  popup_enabled?: boolean | null;
+  popup_heading?: string | null;
+  popup_body?: string | null;
+  popup_code?: string | null;
+};
+
+export const SETTINGS_COLUMNS = "announcement, socials, google_site_verification, popup_enabled, popup_heading, popup_body, popup_code";
+
+/** The shape before the pop-up migration; used only as a fallback while that migration is pending. */
+export const LEGACY_SETTINGS_COLUMNS = "announcement, socials, google_site_verification";
+
+export function resolveSettings(data: SettingsRow | null): SiteSettings {
+  if (!data) {
+    return { announcement: defaultAnnouncement, socials: defaultSocials, googleSiteVerification: null, popup: defaultPopup };
+  }
   const saved = (data.socials ?? {}) as Partial<Record<keyof Socials, string>>;
   const socials = Object.fromEntries(
     Object.entries(defaultSocials).map(([key, fallback]) => [key, key in saved ? (saved[key as keyof Socials] ?? "") : fallback]),
   ) as Socials;
+  const code = (data.popup_code ?? "").trim().toUpperCase();
   return {
     announcement: data.announcement ?? defaultAnnouncement,
     socials,
     googleSiteVerification: data.google_site_verification ?? null,
+    popup: {
+      // No code means nothing to give away, so the pop-up stays hidden whatever the switch says.
+      enabled: Boolean(data.popup_enabled) && code.length > 0,
+      heading: data.popup_heading || defaultPopup.heading,
+      body: data.popup_body || defaultPopup.body,
+      code,
+    },
   };
 }
 
@@ -173,12 +198,15 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   const db = publicDb();
   if (!db) return resolveSettings(null);
 
-  const { data, error } = await db
-    .from("site_settings")
-    .select("announcement, socials, google_site_verification")
-    .eq("id", 1)
-    .maybeSingle();
-  if (error) throw new Error(`Could not load settings: ${error.message}`);
+  const { data, error } = await db.from("site_settings").select(SETTINGS_COLUMNS).eq("id", 1).maybeSingle();
+  if (error) {
+    // 42703 = column does not exist: the pop-up columns arrive with a migration, so until that
+    // has been run the shop keeps working on the older shape instead of failing.
+    if (error.code !== "42703") throw new Error(`Could not load settings: ${error.message}`);
+    const older = await db.from("site_settings").select(LEGACY_SETTINGS_COLUMNS).eq("id", 1).maybeSingle();
+    if (older.error) throw new Error(`Could not load settings: ${older.error.message}`);
+    return resolveSettings(older.data);
+  }
   return resolveSettings(data);
 }
 

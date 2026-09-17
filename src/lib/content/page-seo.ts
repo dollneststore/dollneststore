@@ -12,6 +12,12 @@ export const pageSeoDefaults = {
     description:
       "Shop realistic reborn dolls for sale in the UK: full silicone, weighted and cloth-body babies, each dressed with love. Free tracked delivery in 2–3 days.",
   },
+  "/reviews": {
+    label: "Reviews",
+    title: "Dollnest Reviews – What Families Say About Our Reborn Dolls",
+    description:
+      "Real reviews from families who have welcomed a Dollnest reborn baby home, with their own photos, from Etsy, Vinted and eBay.",
+  },
   "/guides": {
     label: "Guides",
     title: "Reborn Doll Guides, Care Tips & Advice | Dollnest",

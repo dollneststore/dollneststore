@@ -1,5 +1,6 @@
 import type {
   Category,
+  DiscountCode,
   Gender,
   Guide,
   PageSeo,
@@ -17,6 +18,8 @@ export const PRODUCT_COLUMNS =
 export const CATEGORY_COLUMNS = "slug, name, description, image_url, tint, sort_order, intro, seo_title, seo_description";
 
 export const REVIEW_COLUMNS = "id, author_name, rating, body, source, image_url, reviewed_at, is_published";
+
+export const DISCOUNT_COLUMNS = "code, percent_off, is_active, starts_at, expires_at, max_uses, times_used, note";
 
 export const GUIDE_COLUMNS =
   "id, slug, title, excerpt, body, cover_image_url, seo_title, seo_description, status, published_at, updated_at";
@@ -118,6 +121,30 @@ export function mapReview(row: ReviewRow): Review {
     imageUrl: row.image_url,
     reviewedAt: row.reviewed_at,
     isPublished: row.is_published,
+  };
+}
+
+export type DiscountCodeRow = {
+  code: string;
+  percent_off: number;
+  is_active: boolean;
+  starts_at: string | null;
+  expires_at: string | null;
+  max_uses: number | null;
+  times_used: number;
+  note: string | null;
+};
+
+export function mapDiscountCode(row: DiscountCodeRow): DiscountCode {
+  return {
+    code: row.code,
+    percentOff: row.percent_off,
+    isActive: row.is_active,
+    startsAt: row.starts_at,
+    expiresAt: row.expires_at,
+    maxUses: row.max_uses,
+    timesUsed: row.times_used,
+    note: row.note,
   };
 }
 

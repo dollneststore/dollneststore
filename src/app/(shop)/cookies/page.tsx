@@ -20,6 +20,11 @@ export default function CookiesPage() {
           back. It never leaves your device until you check out.
         </li>
         <li>
+          <strong>Your discount code</strong> is saved in local storage too, so it&apos;s still applied when you move from
+          your basket to checkout. We also remember that you&apos;ve seen our welcome pop-up, so it doesn&apos;t appear
+          again for 30 days. Clearing your browser data removes both.
+        </li>
+        <li>
           <strong>Security cookies</strong> are set only when our team signs in to the shop&apos;s admin area. They are
           strictly necessary and aren&apos;t used for visitors.
         </li>

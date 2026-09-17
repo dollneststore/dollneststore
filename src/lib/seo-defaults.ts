@@ -11,6 +11,7 @@ export const ACCESSORIES_SLUG = "accessories";
 export const isAccessoryProduct = (p: Pick<Product, "categorySlug">) => p.categorySlug === ACCESSORIES_SLUG;
 
 export const shopPath = "/reborn-dolls";
+export const reviewsPath = "/reviews";
 export const productPath = (slug: string) => `${shopPath}/${slug}`;
 export const categoryPath = (slug: string) => `${shopPath}/${slug}`;
 export const guidePath = (slug: string) => `/guides/${slug}`;

@@ -21,12 +21,12 @@ const navLinks = [
 const iconButton = "relative grid size-10 place-items-center rounded-full transition-colors hover:bg-blush";
 
 /** Header with the active link highlighted. Needs a Suspense boundary (usePathname on dynamic routes). */
-export function Header() {
-  return <HeaderShell pathname={usePathname()} />;
+export function Header({ tiktok }: { tiktok: string }) {
+  return <HeaderShell pathname={usePathname()} tiktok={tiktok} />;
 }
 
 /** Also used as the Suspense fallback, without an active link. */
-export function HeaderShell({ pathname }: { pathname: string | null }) {
+export function HeaderShell({ pathname, tiktok = "" }: { pathname: string | null; tiktok?: string }) {
   const { count } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   // Escape closes the menu, the way every other dismissible panel behaves.
@@ -78,6 +78,16 @@ export function HeaderShell({ pathname }: { pathname: string | null }) {
         </nav>
 
         <div className="flex items-center gap-1.5">
+          {tiktok ? (
+            <a
+              href={tiktok}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden items-center gap-1.5 rounded-full bg-cocoa px-3.5 py-2 text-[13px] font-bold text-white transition-transform hover:scale-[1.03] sm:flex"
+            >
+              <span aria-hidden>♪</span> TikTok
+            </a>
+          ) : null}
           <Link href="/reborn-dolls" aria-label="Search reborn dolls" className={iconButton}>
             <SearchIcon />
           </Link>
@@ -108,16 +118,21 @@ export function HeaderShell({ pathname }: { pathname: string | null }) {
           aria-label="Mobile"
           className="flex flex-col border-t border-line bg-white px-[clamp(16px,4vw,40px)] pb-4 pt-2 text-base font-semibold lg:hidden"
         >
-          {navLinks.map((link, index) => (
+          {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={closeMenu}
-              className={`py-3.5 ${index < navLinks.length - 1 ? "border-b border-line-soft" : ""} ${isActive(link.href) ? "text-rose" : ""}`}
+              className={`border-b border-line-soft py-3.5 ${isActive(link.href) ? "text-rose" : ""}`}
             >
               {link.label}
             </Link>
           ))}
+          {tiktok ? (
+            <a href={tiktok} target="_blank" rel="noopener noreferrer" onClick={closeMenu} className="py-3.5 text-lilac">
+              <span aria-hidden>♪</span> Watch us on TikTok
+            </a>
+          ) : null}
         </nav>
       ) : null}
     </header>

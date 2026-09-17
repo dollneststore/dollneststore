@@ -1,10 +1,12 @@
 import "server-only";
 import { z } from "zod";
-import { resolveSettings } from "@/lib/data/catalog";
+import { LEGACY_SETTINGS_COLUMNS, resolveSettings, SETTINGS_COLUMNS } from "@/lib/data/catalog";
 import {
   CATEGORY_COLUMNS,
+  DISCOUNT_COLUMNS,
   GUIDE_COLUMNS,
   mapCategory,
+  mapDiscountCode,
   mapGuide,
   mapPageSeo,
   mapProduct,
@@ -12,6 +14,7 @@ import {
   PRODUCT_COLUMNS,
   REVIEW_COLUMNS,
   type CategoryRow,
+  type DiscountCodeRow,
   type GuideRow,
   type PageSeoRow,
   type ProductRow,
@@ -21,6 +24,7 @@ import {
   orderStatuses,
   productStatuses,
   type Category,
+  type DiscountCode,
   type Guide,
   type OrderChannel,
   type OrderStatus,
@@ -250,11 +254,30 @@ export async function getAdminSettings(): Promise<SiteSettings> {
   const { supabase } = await adminContext();
   const { data, error } = await supabase
     .from("site_settings")
-    .select("announcement, socials, google_site_verification")
+    .select(SETTINGS_COLUMNS)
     .eq("id", 1)
     .maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Same fallback as the storefront: the settings page still opens before the pop-up
+    // migration has been run (42703 = column does not exist).
+    if (error.code !== "42703") throw new Error(error.message);
+    const older = await supabase.from("site_settings").select(LEGACY_SETTINGS_COLUMNS).eq("id", 1).maybeSingle();
+    if (older.error) throw new Error(older.error.message);
+    return resolveSettings(older.data);
+  }
   return resolveSettings(data);
+}
+
+export async function getDiscountCodes(): Promise<DiscountCode[]> {
+  const { supabase } = await adminContext();
+  const { data, error } = await supabase
+    .from("discount_codes")
+    .select(DISCOUNT_COLUMNS)
+    .order("is_active", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw new Error(error.message);
+  return (data as DiscountCodeRow[]).map(mapDiscountCode);
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {

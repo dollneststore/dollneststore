@@ -104,10 +104,30 @@ export type Socials = {
   vinted: string;
 };
 
+/** The welcome pop-up. It only appears when it is enabled *and* has a code to give away. */
+export type PopupSettings = {
+  enabled: boolean;
+  heading: string;
+  body: string;
+  code: string;
+};
+
 export type SiteSettings = {
   announcement: string;
   socials: Socials;
   googleSiteVerification: string | null;
+  popup: PopupSettings;
+};
+
+export type DiscountCode = {
+  code: string;
+  percentOff: number;
+  isActive: boolean;
+  startsAt: string | null;
+  expiresAt: string | null;
+  maxUses: number | null;
+  timesUsed: number;
+  note: string | null;
 };
 
 export type CartProduct = {

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getCategories, getGuides, getShopProducts } from "@/lib/data/catalog";
-import { categoryPath, guidePath, productPath, shopPath } from "@/lib/seo-defaults";
+import { categoryPath, guidePath, productPath, reviewsPath, shopPath } from "@/lib/seo-defaults";
 import { site } from "@/lib/site";
 
 type Entry = MetadataRoute.Sitemap[number];
@@ -12,6 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: Entry[] = [
     { url: url("/"), changeFrequency: "daily", priority: 1 },
     { url: url(shopPath), changeFrequency: "daily", priority: 0.9 },
+    { url: url(reviewsPath), changeFrequency: "weekly", priority: 0.7 },
     { url: url("/guides"), changeFrequency: "weekly", priority: 0.6 },
     { url: url("/contact"), changeFrequency: "monthly", priority: 0.4 },
     { url: url("/delivery-returns"), changeFrequency: "monthly", priority: 0.4 },

@@ -4,6 +4,7 @@ import { ProductCard } from "@/components/product/product-card";
 import { buttonPrimary, card, eyebrow, sectionTitle, tintBg } from "@/components/ui/styles";
 import { faqs } from "@/lib/content/faq";
 import { formatPrice } from "@/lib/format";
+import { reviewsPath } from "@/lib/seo-defaults";
 import { site } from "@/lib/site";
 import type { Category, Product, Review, Socials } from "@/lib/types";
 
@@ -242,6 +243,9 @@ export function ReviewsSection({ reviews }: { reviews: Review[] }) {
             </p>
           </div>
         </div>
+        <Link href={reviewsPath} className="text-sm font-bold text-lilac hover:underline">
+          Read all reviews →
+        </Link>
       </div>
       <div className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
         {reviews.map((r) => (

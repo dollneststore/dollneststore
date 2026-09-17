@@ -176,8 +176,37 @@ export const reviewPhotoSchema = z.object({
   imageUrl: optionalImageUrl,
 });
 
+/** Discount codes are typed by customers, so they are upper-cased and kept simple. */
+export const DISCOUNT_CODE_PATTERN = /^[A-Z0-9][A-Z0-9-]{2,23}$/;
+
+const optionalDate = z
+  .string()
+  .trim()
+  .regex(/^(\d{4}-\d{2}-\d{2})?$/, "Use a valid date")
+  .transform((v) => v || null);
+
+export const discountSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(DISCOUNT_CODE_PATTERN, "3–24 letters, numbers or dashes, e.g. WELCOME10"),
+  percentOff: z.coerce.number().int("Whole numbers only").min(1, "At least 1%").max(90, "90% is the maximum"),
+  isActive: z.boolean(),
+  startsAt: optionalDate,
+  expiresAt: optionalDate,
+  maxUses: optionalNumber(100000),
+  note: optionalText(200),
+});
+
 export const settingsSchema = z.object({
   announcement: text(160),
+  popupEnabled: z.boolean(),
+  popupHeading: text(80),
+  popupBody: text(240),
+  popupCode: z
+    .union([z.literal(""), z.string().trim().toUpperCase().regex(DISCOUNT_CODE_PATTERN, "Use an existing code, e.g. WELCOME10")])
+    .transform((v) => v || null),
   tiktok: optionalHttpsUrl,
   etsy: optionalHttpsUrl,
   vinted: optionalHttpsUrl,
