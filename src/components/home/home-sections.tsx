@@ -111,6 +111,7 @@ export function FeaturedBabies({ products }: { products: Product[] }) {
 
 const trust = [
   { glyph: "♡", title: "Realistic touch", sub: "Soft, weighted bodies that feel like a newborn", tone: "bg-blush text-rose" },
+  { glyph: "◉", title: "Real photos", sub: "No stock images — what you see is what you receive", tone: "bg-sky text-lilac" },
   { glyph: "✉", title: "Free UK delivery", sub: `Tracked and carefully packed, ${site.delivery.arrives}`, tone: "bg-sage text-sage-deep" },
   { glyph: "↺", title: "14-day returns", sub: "Shop with confidence under UK consumer law", tone: "bg-peach text-peach-deep" },
   { glyph: "❦", title: "Small shop, Bristol", sub: `Rehoming babies since ${site.stats.sellingSince}`, tone: "bg-lilac-soft text-lilac" },
@@ -120,7 +121,7 @@ export function TrustStrip() {
   return (
     <section
       aria-label="Why families choose Dollnest"
-      className={`mb-[clamp(48px,6vw,88px)] grid grid-cols-1 gap-[18px] p-[clamp(18px,2.5vw,28px)] sm:grid-cols-2 lg:grid-cols-4 ${card} rounded-3xl`}
+      className={`mb-[clamp(48px,6vw,88px)] grid grid-cols-1 gap-[18px] p-[clamp(18px,2.5vw,28px)] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 ${card} rounded-3xl`}
     >
       {trust.map((t) => (
         <div key={t.title} className="flex items-start gap-3.5">
@@ -268,34 +269,42 @@ export function SocialSection({ images, socials }: { images: string[]; socials: 
   return (
     <section aria-labelledby="social-heading" className="pb-[clamp(48px,6vw,88px)]">
       <div className="mb-[22px] flex flex-wrap items-end justify-between gap-4">
-        <h2 id="social-heading" className={sectionTitle}>
-          Follow along <em className="text-lilac">@dollneststore</em>
-        </h2>
+        <div>
+          <h2 id="social-heading" className={sectionTitle}>
+            See our babies on TikTok <em className="text-lilac">@dollneststore</em>
+          </h2>
+          <p className="mt-2 max-w-[520px] text-[15px] text-pretty text-muted">
+            New videos every week — real photos and real babies, exactly as they arrive with you.
+          </p>
+        </div>
         <div className="flex flex-wrap gap-2 text-[13px] font-bold">
-          {[
-            { href: socials.tiktok, label: "TikTok" },
-            { href: socials.instagram, label: "Instagram" },
-            { href: socials.etsy, label: "Etsy" },
-          ]
-            .filter((link) => link.href)
-            .map((link, index) => (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`rounded-[20px] px-4 py-2.5 ${index === 0 ? "bg-cocoa text-white" : "border-[1.5px] border-[#ead9e2] bg-white"}`}
-              >
-                {link.label}
-              </a>
-            ))}
+          {socials.tiktok ? (
+            <a
+              href={socials.tiktok}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-[20px] bg-cocoa px-5 py-3 text-white transition-transform hover:scale-[1.03]"
+            >
+              <span aria-hidden>♪</span> Follow on TikTok
+            </a>
+          ) : null}
+          {socials.etsy ? (
+            <a
+              href={socials.etsy}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-[20px] border-[1.5px] border-[#ead9e2] bg-white px-4 py-2.5"
+            >
+              Etsy
+            </a>
+          ) : null}
         </div>
       </div>
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
         {images.map((src, i) => (
           <li key={src}>
             <a
-              href={socials.tiktok || socials.instagram || "/reborn-dolls"}
+              href={socials.tiktok || "/reborn-dolls"}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Watch Dollnest on TikTok"
@@ -322,7 +331,7 @@ export function FaqSection() {
           Good to know
         </h2>
         <p className="mt-3 text-[15px] leading-relaxed text-muted">
-          Can&apos;t find your answer? Message us on WhatsApp, TikTok or Instagram — we reply within a day.
+          Can&apos;t find your answer? Message us on WhatsApp or TikTok — we reply within a day.
         </p>
       </div>
       <div className="flex flex-col gap-2.5">

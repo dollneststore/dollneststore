@@ -18,12 +18,10 @@ export async function Footer() {
     getCategories().catch(fallback([] as Category[], "[footer] categories")),
     getCopyrightYear(),
   ]);
+  // TikTok gets its own button above; eBay is mentioned in the line below without a link.
   const socialLinks = [
-    { href: socials.tiktok, label: "TikTok", short: "TT", bg: "bg-blush" },
-    { href: socials.instagram, label: "Instagram", short: "IG", bg: "bg-lilac-soft" },
     { href: socials.etsy, label: "Etsy", short: "Et", bg: "bg-peach" },
     { href: socials.vinted, label: "Vinted", short: "V", bg: "bg-sage" },
-    { href: socials.ebay, label: "eBay", short: "eB", bg: "bg-sky" },
   ].filter((s) => s.href);
 
   return (
@@ -36,8 +34,20 @@ export async function Footer() {
               <span className="font-serif text-[30px] font-semibold text-lilac">Dollnest</span>
             </div>
             <p className="text-sm leading-relaxed text-muted">
-              Reborn baby dolls from a small shop in Bristol, England. Free tracked UK delivery on every order.
+              Reborn baby dolls from a small shop in Bristol, England. Every photo is of the real baby you receive —
+              never a stock image. Free tracked UK delivery on every order.
             </p>
+            {socials.tiktok ? (
+              <a
+                href={socials.tiktok}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-fit items-center gap-2 rounded-full bg-cocoa px-4 py-2.5 text-[13px] font-bold text-white transition-transform hover:scale-[1.03]"
+              >
+                <span aria-hidden>♪</span> Watch our babies on TikTok
+              </a>
+            ) : null}
+            <p className="text-xs text-muted">New videos every week. You&apos;ll also find us on eBay.</p>
             <ul className="flex flex-wrap gap-2">
               {socialLinks.map((s) => (
                 <li key={s.label}>

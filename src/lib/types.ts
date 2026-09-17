@@ -94,12 +94,14 @@ export type PageSeo = {
   ogImageUrl: string | null;
 };
 
+/**
+ * Links shown on the shop. eBay is deliberately absent: the shop sells other things there,
+ * so eBay is mentioned in copy but never linked. Instagram is not used.
+ */
 export type Socials = {
   tiktok: string;
-  instagram: string;
   etsy: string;
   vinted: string;
-  ebay: string;
 };
 
 export type SiteSettings = {

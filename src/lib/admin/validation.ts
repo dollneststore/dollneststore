@@ -173,8 +173,6 @@ export const reviewSchema = z.object({
 export const settingsSchema = z.object({
   announcement: text(160),
   tiktok: optionalHttpsUrl,
-  instagram: optionalHttpsUrl,
   etsy: optionalHttpsUrl,
   vinted: optionalHttpsUrl,
-  ebay: optionalHttpsUrl,
 });

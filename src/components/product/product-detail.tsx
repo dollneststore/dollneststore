@@ -7,7 +7,7 @@ import { WhatsAppIcon } from "@/components/icons";
 import { Breadcrumbs } from "@/components/site/breadcrumbs";
 import { JsonLd } from "@/components/site/json-ld";
 import { badgeTone, buttonOutline, container } from "@/components/ui/styles";
-import { getCategories, getProductBySlug, getProductReviewStats, getShopProducts } from "@/lib/data/catalog";
+import { getCategories, getProductBySlug, getProductReviewStats, getShopProducts, getSiteSettings } from "@/lib/data/catalog";
 import { formatDate, formatPrice, parseDescription, productMeta } from "@/lib/format";
 import { categoryDefaults, categoryPath, productPath, shopPath } from "@/lib/seo-defaults";
 import { site, whatsappUrl } from "@/lib/site";
@@ -16,11 +16,12 @@ import { ProductCard } from "./product-card";
 import { ProductGallery } from "./product-gallery";
 
 export async function ProductDetail({ slug }: { slug: string }) {
-  const [product, products, categories, reviewStats] = await Promise.all([
+  const [product, products, categories, reviewStats, settings] = await Promise.all([
     getProductBySlug(slug),
     getShopProducts(),
     getCategories(),
     getProductReviewStats(),
+    getSiteSettings(),
   ]);
   if (!product) notFound();
 
@@ -108,7 +109,12 @@ export async function ProductDetail({ slug }: { slug: string }) {
       <Breadcrumbs items={breadcrumbs} />
 
       <div className="grid grid-cols-1 gap-[clamp(24px,4vw,56px)] lg:grid-cols-[1.1fr_1fr]">
-        <ProductGallery images={product.images} title={product.title} />
+        <div className="flex flex-col gap-3">
+          <ProductGallery images={product.images} title={product.title} />
+          <p className="text-xs leading-relaxed text-muted">
+            <span aria-hidden>◉</span> Real photos of this exact baby — we never use stock images.
+          </p>
+        </div>
 
         <div className="flex flex-col gap-5">
           <div className="flex flex-wrap items-center gap-2">
@@ -150,12 +156,23 @@ export async function ProductDetail({ slug }: { slug: string }) {
             <WhatsAppIcon className="size-5 text-whatsapp" />
             Ask about this baby on WhatsApp
           </a>
+          {settings.socials.tiktok ? (
+            <a
+              href={settings.socials.tiktok}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-fit text-sm font-bold text-lilac hover:underline"
+            >
+              <span aria-hidden>♪</span> See our babies in motion on TikTok
+            </a>
+          ) : null}
 
           <ul className="grid grid-cols-1 gap-2 rounded-[22px] border border-line bg-white p-5 text-sm sm:grid-cols-2">
             <li>✉ Dispatched {site.delivery.dispatch}</li>
             <li>⌂ Tracked UK delivery, {site.delivery.arrives}</li>
             <li>↺ 14-day returns</li>
             <li>♡ Wrapped with love in Bristol</li>
+            <li>◉ Real photos — no stock images</li>
           </ul>
 
           <section aria-labelledby="about-heading">

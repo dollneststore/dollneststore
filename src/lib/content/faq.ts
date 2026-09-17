@@ -2,6 +2,10 @@ import { site } from "@/lib/site";
 
 export const faqs = [
   {
+    q: "Are the photos of the actual doll?",
+    a: "Yes. Every photo shows the exact baby you'll receive — we never use stock images. You can also see many of our babies in motion on TikTok @dollneststore.",
+  },
+  {
     q: "Are the dolls suitable for children?",
     a: "Cloth-body and mini dolls make lovely companions for ages 3+. Full silicone babies are collectors' pieces and best for ages 8+. None of our dolls are suitable for children under 3.",
   },

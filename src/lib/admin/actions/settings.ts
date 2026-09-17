@@ -13,10 +13,8 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
   const parsed = settingsSchema.safeParse({
     announcement: field(formData, "announcement"),
     tiktok: field(formData, "tiktok"),
-    instagram: field(formData, "instagram"),
     etsy: field(formData, "etsy"),
     vinted: field(formData, "vinted"),
-    ebay: field(formData, "ebay"),
   });
   if (!parsed.success) {
     return { ok: false, message: "Please check the highlighted fields.", fieldErrors: z.flattenError(parsed.error).fieldErrors };

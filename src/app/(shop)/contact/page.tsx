@@ -37,23 +37,37 @@ export default async function ContactPage() {
           <a href={`mailto:${site.email}`} className="font-bold text-lilac hover:underline">
             {site.email}
           </a>
-          <ul className="mt-auto flex flex-wrap gap-2 text-sm font-bold">
-            {[
-              ["TikTok", socials.tiktok],
-              ["Instagram", socials.instagram],
-              ["Etsy", socials.etsy],
-              ["Vinted", socials.vinted],
-              ["eBay", socials.ebay],
-            ]
-              .filter(([, href]) => href)
-              .map(([label, href]) => (
-              <li key={label}>
-                <a href={href} target="_blank" rel="noopener noreferrer" className="block rounded-full border border-line px-3.5 py-2 hover:border-lilac hover:text-lilac">
-                  {label}
+          <ul className="flex flex-wrap gap-2 text-sm font-bold">
+            {socials.tiktok ? (
+              <li>
+                <a
+                  href={socials.tiktok}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block rounded-full bg-cocoa px-3.5 py-2 text-white transition-transform hover:scale-[1.03]"
+                >
+                  <span aria-hidden>♪</span> TikTok
                 </a>
               </li>
-            ))}
+            ) : null}
+            {([
+              ["Etsy", socials.etsy],
+              ["Vinted", socials.vinted],
+            ] as const)
+              .filter(([, href]) => href)
+              .map(([label, href]) => (
+                <li key={label}>
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="block rounded-full border border-line px-3.5 py-2 hover:border-lilac hover:text-lilac">
+                    {label}
+                  </a>
+                </li>
+              ))}
           </ul>
+          {/* eBay is mentioned, never linked: the eBay shop also sells things other than dolls. */}
+          <p className="mt-auto text-xs leading-relaxed text-muted">
+            TikTok is where we post new babies first. We also sell on eBay and Vinted, where families have been buying
+            from us since {site.stats.sellingSince}.
+          </p>
         </section>
 
         <section className={`${card} flex flex-col gap-2 p-6 text-sm md:col-span-2 lg:col-span-1`}>

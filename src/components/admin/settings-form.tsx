@@ -5,12 +5,12 @@ import type { SiteSettings } from "@/lib/types";
 import { adminButton, AdminCard, Field, FormMessage, inputClass, MobileSaveBar, SaveStatus } from "./form-ui";
 import { useFormAction } from "./use-form-action";
 
+// eBay is mentioned in the shop copy but never linked (we sell other things there),
+// so it has no field here.
 const socialFields = [
-  { key: "tiktok", label: "TikTok" },
-  { key: "instagram", label: "Instagram" },
+  { key: "tiktok", label: "TikTok (shown first everywhere)" },
   { key: "etsy", label: "Etsy shop" },
   { key: "vinted", label: "Vinted profile" },
-  { key: "ebay", label: "eBay profile" },
 ] as const;
 
 export function SettingsForm({ settings }: { settings: SiteSettings }) {
