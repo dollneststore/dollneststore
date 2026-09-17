@@ -39,8 +39,9 @@ export default async function ReviewsPage() {
         <span className={eyebrow}>Loved by families</span>
         <h1 className="font-serif text-[clamp(38px,5vw,60px)] leading-none font-medium">What families say</h1>
         <p className="text-[15px] leading-relaxed text-muted">
-          Every review here was left by a real customer on Etsy, Vinted or eBay — including {withPhotos} photos taken by
-          families at home. We never write reviews ourselves.
+          Every review here was left by a real customer who bought from us
+          {withPhotos > 0 ? `, and ${withPhotos} of them shared their own photo at home` : ""}. Each one shows where it
+          was left. We never write reviews ourselves.
         </p>
       </header>
 

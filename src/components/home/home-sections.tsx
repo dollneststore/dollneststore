@@ -17,9 +17,11 @@ function Fleuron({ className = "" }: { className?: string }) {
 }
 
 export function Stars({ rating }: { rating: number }) {
-  const full = Math.round(Math.min(5, Math.max(0, rating)));
+  const value = Math.min(5, Math.max(0, rating));
+  const full = Math.round(value);
   return (
-    <span role="img" aria-label={`${full} out of 5 stars`} className="text-[13px] tracking-[2px] text-star">
+    // The stars are rounded, but the label keeps the real figure so it matches the number shown.
+    <span role="img" aria-label={`${value.toFixed(1)} out of 5 stars`} className="text-[13px] tracking-[2px] text-star">
       {"★".repeat(full)}
       <span className="text-line">{"★".repeat(5 - full)}</span>
     </span>
@@ -209,8 +211,9 @@ export function GiftOccasions({ images }: { images: string[] }) {
               className={`${card} flex h-full flex-col items-center gap-3 p-5 text-center transition-transform hover:-translate-y-0.5`}
             >
               <div className={`relative size-[92px] overflow-hidden rounded-full ${o.tone}`}>
-                {images[index] ? (
-                  <Image src={images[index]} alt="" fill sizes="92px" className="object-cover" />
+                {/* Wraps around, so a small catalogue still fills every circle. */}
+                {images.length ? (
+                  <Image src={images[index % images.length]} alt="" fill sizes="92px" className="object-cover" />
                 ) : null}
               </div>
               <div>

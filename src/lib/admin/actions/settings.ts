@@ -30,13 +30,15 @@ export async function saveSettings(_prev: FormState, formData: FormData): Promis
   const { announcement, heroImageUrl, popupEnabled, popupHeading, popupBody, popupCode, ...socials } = parsed.data;
 
   if (popupEnabled && popupCode) {
-    // A pop-up advertising a code that doesn't work would be worse than no pop-up.
-    const { data: code } = await supabase.from("discount_codes").select("code, is_active").eq("code", popupCode).maybeSingle();
-    if (!code) {
-      return { ok: false, message: "That discount code doesn't exist yet.", fieldErrors: { popupCode: ["Create it under Discounts first"] } };
-    }
-    if (!code.is_active) {
-      return { ok: false, message: "That discount code is switched off.", fieldErrors: { popupCode: ["Switch it on under Discounts"] } };
+    // A pop-up advertising a code that doesn't work would be worse than no pop-up. This is the
+    // same check a customer's code goes through, so dates and usage limits count too.
+    const { data: usable } = await supabase.rpc("check_discount_code", { p_code: popupCode });
+    if (!(Array.isArray(usable) ? usable[0] : usable)) {
+      return {
+        ok: false,
+        message: "That discount code can't be used right now.",
+        fieldErrors: { popupCode: ["Check it under Discounts: it must exist, be switched on and be within its dates"] },
+      };
     }
   }
 

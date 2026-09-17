@@ -47,8 +47,8 @@ export default async function HomePage() {
   const heroProduct = featured.find((p) => p.images.length > 0) ?? gallery[0];
   const rest = gallery.filter((p) => p.id !== heroProduct?.id);
   const socialImages = rest.slice(0, 5).map((p) => p.images[0].url);
-  // Different babies from the ones above, so the page doesn't repeat itself.
-  const occasionImages = (rest.length >= 10 ? rest.slice(5, 10) : rest.slice(0, 5)).map((p) => p.images[0].url);
+  // Different babies from the social strip where the catalogue allows it.
+  const occasionImages = rest.slice(5, 10).map((p) => p.images[0].url);
 
   const organization = {
     "@context": "https://schema.org",

@@ -17,15 +17,12 @@ export function DiscountForm() {
   return (
     <form ref={formRef} onSubmit={onSubmit}>
       <AdminCard title="Add a discount code">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Code" htmlFor="code" error={errors.code} hint="Customers type this, e.g. WELCOME10.">
             <input id="code" name="code" required maxLength={24} placeholder="WELCOME10" className={`${inputClass} uppercase`} />
           </Field>
           <Field label="Discount %" htmlFor="percentOff" error={errors.percentOff}>
             <input id="percentOff" name="percentOff" type="number" min={1} max={90} defaultValue={10} className={inputClass} />
-          </Field>
-          <Field label="Maximum uses" htmlFor="maxUses" error={errors.maxUses} hint="Leave empty for unlimited.">
-            <input id="maxUses" name="maxUses" type="number" min={1} className={inputClass} />
           </Field>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -42,6 +39,10 @@ export function DiscountForm() {
         <label className="flex items-center gap-2.5 text-sm font-semibold">
           <input type="checkbox" name="isActive" defaultChecked className="size-4 accent-lilac" />
           Switched on
+        </label>
+        <label className="flex items-center gap-2.5 text-sm font-semibold">
+          <input type="checkbox" name="overwrite" className="size-4 accent-lilac" />
+          Replace the existing code, if this code already exists
         </label>
         <FormMessage state={state} />
         <button type="submit" disabled={pending} className={`${adminButton} w-fit`}>

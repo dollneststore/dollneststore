@@ -1,8 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CloseIcon } from "@/components/icons";
 import { buttonPrimary } from "@/components/ui/styles";
 import type { PopupSettings } from "@/lib/types";
@@ -12,6 +12,7 @@ const DELAY_MS = 7000;
 const HIDE_FOR_DAYS = 30;
 // Never interrupt someone who is already buying.
 const QUIET_PATHS = ["/basket", "/checkout"];
+const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Welcome discount pop-up. Content and code come from /admin/settings, so it can be changed
@@ -24,6 +25,15 @@ export function WelcomePopup({ popup }: { popup: PopupSettings }) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const quiet = QUIET_PATHS.some((p) => pathname?.startsWith(p));
+
+  const close = useCallback(() => {
+    setOpen(false);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, String(Date.now()));
+    } catch {
+      // Nothing to do: the pop-up will appear again on the next visit.
+    }
+  }, []);
 
   useEffect(() => {
     if (!popup.enabled || quiet) return;
@@ -38,24 +48,41 @@ export function WelcomePopup({ popup }: { popup: PopupSettings }) {
     return () => window.clearTimeout(timer);
   }, [popup.enabled, quiet]);
 
+  // While it is open it behaves like a proper dialog: the page behind can't scroll,
+  // Tab stays inside it, Escape closes it and focus goes back where it came from.
   useEffect(() => {
     if (!open) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const bodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     dialogRef.current?.focus();
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
 
-  function close() {
-    setOpen(false);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, String(Date.now()));
-    } catch {
-      // Nothing to do: the pop-up will appear again on the next visit.
-    }
-  }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        close();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = dialogRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE);
+      if (!items?.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = bodyOverflow;
+      previous?.focus?.();
+    };
+  }, [open, close]);
 
   async function copy() {
     try {
@@ -66,7 +93,8 @@ export function WelcomePopup({ popup }: { popup: PopupSettings }) {
     }
   }
 
-  if (!popup.enabled || !open) return null;
+  // `quiet` also hides an already-open pop-up, so navigating to the basket closes it.
+  if (!popup.enabled || !open || quiet) return null;
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-cocoa/30 p-4 backdrop-blur-[2px]">

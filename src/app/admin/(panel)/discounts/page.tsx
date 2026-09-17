@@ -14,7 +14,7 @@ export default function DiscountsPage() {
     <>
       <PageHeader
         title="Discounts"
-        description="Codes customers can enter in their basket. The welcome pop-up gives away the code you choose in Settings."
+        description="Codes customers can enter in their basket. The welcome pop-up gives away the code you choose in Settings. Until online payment is live, check a code here before honouring it on a WhatsApp order."
       />
       <Suspense fallback={<LoadingBlock />}>
         <Discounts />
@@ -37,7 +37,6 @@ async function Discounts() {
                 <th className="p-4 font-bold">Code</th>
                 <th className="p-4 font-bold">Discount</th>
                 <th className="p-4 font-bold">Dates</th>
-                <th className="p-4 font-bold">Used</th>
                 <th className="p-4 font-bold">Status</th>
                 <th className="p-4 font-bold" />
               </tr>
@@ -53,10 +52,6 @@ async function Discounts() {
                   <td className="p-4 text-xs">
                     {c.startsAt ? `From ${formatDate(c.startsAt)}` : "Any time"}
                     {c.expiresAt ? ` · until ${formatDate(c.expiresAt)}` : ""}
-                  </td>
-                  <td className="p-4 text-xs">
-                    {c.timesUsed}
-                    {c.maxUses ? ` of ${c.maxUses}` : ""}
                   </td>
                   <td className="p-4 text-xs font-bold">
                     {c.isActive ? <span className="text-sage-deep">On</span> : <span className="text-rose">Off</span>}

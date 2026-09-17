@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { DISCOUNT_CODE_PATTERN } from "@/lib/admin/validation";
-import { allowRequest, clientIp } from "@/lib/rate-limit";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { createPublicClient } from "@/lib/supabase/public";
 
 export type DiscountState = { ok: boolean; message: string; code?: string; percentOff?: number } | null;
@@ -21,7 +21,8 @@ export async function applyDiscountCode(_prev: DiscountState, formData: FormData
   const parsed = schema.safeParse(String(formData.get("code") ?? ""));
   if (!parsed.success) return { ok: false, message: "Enter your discount code." };
 
-  if (!(await allowRequest("discount", await clientIp(), 20, 60 * 60))) {
+  // Fails closed: without a working limiter, codes could be guessed without any brake.
+  if ((await checkRateLimit("discount", await clientIp(), 20, 60 * 60)) !== "allowed") {
     return { ok: false, message: "Too many tries from this connection. Please try again later." };
   }
 

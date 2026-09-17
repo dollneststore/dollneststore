@@ -7,6 +7,18 @@ import { DISCOUNT_CODE_PATTERN, discountSchema } from "@/lib/admin/validation";
 
 const field = (formData: FormData, key: string) => String(formData.get(key) ?? "");
 
+/**
+ * The UTC instant for a wall-clock moment in London, so British Summer Time can't shift a
+ * code's first or last day by one (a code set to end on the 30th really ends on the 30th).
+ */
+function londonInstant(date: string, edge: "start" | "end") {
+  const wall = new Date(`${date}T${edge === "start" ? "00:00:00" : "23:59:59"}Z`);
+  const offset =
+    new Date(wall.toLocaleString("en-US", { timeZone: "Europe/London" })).getTime() -
+    new Date(wall.toLocaleString("en-US", { timeZone: "UTC" })).getTime();
+  return new Date(wall.getTime() - offset).toISOString();
+}
+
 /** Creates a code, or updates it if the same code is submitted again. */
 export async function saveDiscountCode(_prev: FormState, formData: FormData): Promise<FormState> {
   const { supabase } = await adminContext();
@@ -28,14 +40,24 @@ export async function saveDiscountCode(_prev: FormState, formData: FormData): Pr
     return { ok: false, message: "The end date is before the start date.", fieldErrors: { expiresAt: ["Must be after the start date"] } };
   }
 
+  // Re-saving a code replaces all of its settings, so it can't happen by accident.
+  const { data: existing } = await supabase.from("discount_codes").select("code").eq("code", v.code).maybeSingle();
+  if (existing && formData.get("overwrite") !== "on") {
+    return {
+      ok: false,
+      message: `${v.code} already exists.`,
+      fieldErrors: { code: ["Tick “Replace the existing code” below to change its settings"] },
+    };
+  }
+
   const { error } = await supabase.from("discount_codes").upsert(
     {
       code: v.code,
       percent_off: v.percentOff,
       is_active: v.isActive,
-      starts_at: v.startsAt,
-      // Stored as the end of the chosen day, so a code works all day on its last day.
-      expires_at: v.expiresAt ? `${v.expiresAt}T23:59:59Z` : null,
+      // Both edges are London wall-clock, so the code covers exactly the days chosen.
+      starts_at: v.startsAt ? londonInstant(v.startsAt, "start") : null,
+      expires_at: v.expiresAt ? londonInstant(v.expiresAt, "end") : null,
       max_uses: v.maxUses,
       note: v.note,
     },
