@@ -2,6 +2,7 @@ import {
   Collections,
   FaqSection,
   FeaturedBabies,
+  GiftOccasions,
   Hero,
   ReviewsSection,
   SocialSection,
@@ -44,10 +45,10 @@ export default async function HomePage() {
   // Hero and social strip use our own photos from the catalogue (never an external host).
   const gallery = products.filter((p) => !isAccessoryProduct(p) && p.images.length > 0);
   const heroProduct = featured.find((p) => p.images.length > 0) ?? gallery[0];
-  const socialImages = gallery
-    .filter((p) => p.id !== heroProduct?.id)
-    .slice(0, 5)
-    .map((p) => p.images[0].url);
+  const rest = gallery.filter((p) => p.id !== heroProduct?.id);
+  const socialImages = rest.slice(0, 5).map((p) => p.images[0].url);
+  // Different babies from the ones above, so the page doesn't repeat itself.
+  const occasionImages = (rest.length >= 10 ? rest.slice(5, 10) : rest.slice(0, 5)).map((p) => p.images[0].url);
 
   const organization = {
     "@context": "https://schema.org",
@@ -103,6 +104,7 @@ export default async function HomePage() {
       <FeaturedBabies products={featured} />
       <TrustStrip />
       <Collections categories={categories} fromPrices={fromPrices} />
+      <GiftOccasions images={occasionImages} />
       <Values />
       <ReviewsSection reviews={reviews} />
       {socialImages.length ? <SocialSection images={socialImages} socials={settings.socials} /> : null}

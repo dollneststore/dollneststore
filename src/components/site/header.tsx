@@ -9,11 +9,12 @@ import { BagIcon, CloseIcon, MenuIcon, SearchIcon } from "@/components/icons";
 import { container } from "@/components/ui/styles";
 import { site } from "@/lib/site";
 
+// Every item opens its own page — no jumps to a section of the home page.
 const navLinks = [
   { href: "/", label: "♡ Home" },
   { href: "/reborn-dolls", label: "Reborn dolls" },
-  { href: "/#collections", label: "Collections" },
-  { href: "/#reviews", label: "Reviews" },
+  { href: "/reborn-dolls/accessories", label: "Accessories" },
+  { href: "/reviews", label: "Reviews" },
   { href: "/guides", label: "Guides" },
   { href: "/contact", label: "Contact" },
 ];
@@ -38,8 +39,14 @@ export function HeaderShell({ pathname, tiktok = "" }: { pathname: string | null
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [menuOpen]);
-  const isActive = (href: string) =>
-    pathname !== null && (href === "/" ? pathname === "/" : !href.includes("#") && pathname.startsWith(href));
+  // The most specific match wins, so /reborn-dolls/accessories highlights Accessories
+  // rather than both it and Reborn dolls.
+  const matched = navLinks
+    .filter((link) =>
+      pathname === null ? false : link.href === "/" ? pathname === "/" : pathname === link.href || pathname.startsWith(`${link.href}/`),
+    )
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  const isActive = (href: string) => matched?.href === href;
   const closeMenu = () => setMenuOpen(false);
 
   return (

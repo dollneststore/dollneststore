@@ -4,7 +4,7 @@ import { ProductCard } from "@/components/product/product-card";
 import { buttonPrimary, card, eyebrow, sectionTitle, tintBg } from "@/components/ui/styles";
 import { faqs } from "@/lib/content/faq";
 import { formatPrice } from "@/lib/format";
-import { reviewsPath } from "@/lib/seo-defaults";
+import { reviewsPath, shopPath } from "@/lib/seo-defaults";
 import { site } from "@/lib/site";
 import type { Category, Product, Review, Socials } from "@/lib/types";
 
@@ -152,8 +152,8 @@ export function Collections({ categories, fromPrices }: { categories: Category[]
       <div className="grid grid-cols-2 gap-[18px] lg:grid-cols-4">
         {categories.map((c) => (
           <Link key={c.slug} href={`/reborn-dolls/${c.slug}`} className="group flex flex-col items-center gap-3 text-center">
-            <div className={`w-full rounded-[50%_50%_18px_18px] p-2.5 ${tintBg[c.tint]}`}>
-              <div className="relative aspect-[1/1.1] overflow-hidden rounded-[50%_50%_10px_10px]">
+            <div className={`w-full rounded-[24px] p-2.5 ${tintBg[c.tint]}`}>
+              <div className="relative aspect-square overflow-hidden rounded-[18px]">
                 {c.imageUrl ? (
                   <Image
                     src={c.imageUrl}
@@ -175,6 +175,57 @@ export function Collections({ categories, fromPrices }: { categories: Category[]
           </Link>
         ))}
       </div>
+    </section>
+  );
+}
+
+// The photos are our own babies, never stock pictures of children — the same promise the
+// rest of the page makes.
+const occasions = [
+  { glyph: "🎂", title: "Birthdays", text: "A keepsake they'll still have long after the candles.", tone: "bg-blush" },
+  { glyph: "🎄", title: "Christmas", text: "Wrapped and ready to make the morning magical.", tone: "bg-sage" },
+  { glyph: "🎀", title: "Baby showers", text: "A gentle way to celebrate a new beginning.", tone: "bg-lilac-soft" },
+  { glyph: "🏆", title: "Special moments", text: "Mark a big achievement with something to treasure.", tone: "bg-peach" },
+  { glyph: "💗", title: "Just because", text: "For comfort, company, or simply to show you care.", tone: "bg-sky" },
+];
+
+export function GiftOccasions({ images }: { images: string[] }) {
+  return (
+    <section aria-labelledby="occasions-heading" className="pb-[clamp(48px,6vw,88px)]">
+      <div className="mb-7 text-center">
+        <Fleuron className="text-sm" />
+        <h2 id="occasions-heading" className={`mt-1.5 ${sectionTitle}`}>
+          A gift for every occasion
+        </h2>
+        <p className="mx-auto mt-2 max-w-[560px] text-[15px] text-pretty text-muted">
+          Our babies are chosen as gifts as often as they are for collections — wrapped with care and posted free.
+        </p>
+      </div>
+      <ul className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+        {occasions.map((o, index) => (
+          <li key={o.title}>
+            <Link
+              href={shopPath}
+              className={`${card} flex h-full flex-col items-center gap-3 p-5 text-center transition-transform hover:-translate-y-0.5`}
+            >
+              <div className={`relative size-[92px] overflow-hidden rounded-full ${o.tone}`}>
+                {images[index] ? (
+                  <Image src={images[index]} alt="" fill sizes="92px" className="object-cover" />
+                ) : null}
+              </div>
+              <div>
+                <p className="font-serif text-[22px] font-semibold">
+                  <span aria-hidden className="mr-1.5">
+                    {o.glyph}
+                  </span>
+                  {o.title}
+                </p>
+                <p className="mt-1 text-[13px] leading-relaxed text-muted">{o.text}</p>
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

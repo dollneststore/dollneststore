@@ -34,7 +34,7 @@ export const site = {
     ebayPositive: "100%",
     ebayRatings: 984,
     itemsSold: "2.6K",
-    sellingSince: 2016,
+    sellingSince: 2024,
   },
 } as const;
 
