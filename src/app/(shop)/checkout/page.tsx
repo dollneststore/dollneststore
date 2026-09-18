@@ -3,6 +3,7 @@ import { CheckoutView } from "@/components/cart/checkout-view";
 import { container } from "@/components/ui/styles";
 import { getSiteSettings, resolveSettings } from "@/lib/data/catalog";
 import { fallback } from "@/lib/errors";
+import { isStripeEnabled } from "@/lib/stripe";
 
 export const metadata: Metadata = {
   title: "Checkout",
@@ -15,7 +16,7 @@ export default async function CheckoutPage() {
   return (
     <div className={`${container} pt-[clamp(28px,4vw,56px)] pb-[clamp(56px,7vw,96px)]`}>
       <h1 className="mb-8 font-serif text-[clamp(38px,5vw,56px)] leading-none font-medium">Checkout</h1>
-      <CheckoutView etsyUrl={socials.etsy} />
+      <CheckoutView etsyUrl={socials.etsy} cardPayment={isStripeEnabled()} />
     </div>
   );
 }

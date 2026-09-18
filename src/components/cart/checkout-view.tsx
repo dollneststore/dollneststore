@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useActionState } from "react";
+import { startCardCheckout } from "@/app/actions/checkout";
 import { WhatsAppIcon } from "@/components/icons";
 import { buttonOutline, buttonPrimary, card } from "@/components/ui/styles";
 import { formatPrice } from "@/lib/format";
@@ -9,11 +11,12 @@ import { DiscountField } from "./discount-field";
 import { useCart, useHydrated } from "./use-cart";
 import { discountPence, useDiscount } from "./use-discount";
 
-export function CheckoutView({ etsyUrl }: { etsyUrl: string }) {
+export function CheckoutView({ etsyUrl, cardPayment }: { etsyUrl: string; cardPayment: boolean }) {
   const hydrated = useHydrated();
   const { items, subtotalPence } = useCart();
   const { discount } = useDiscount();
   const saving = discountPence(subtotalPence, discount);
+  const [state, formAction, pending] = useActionState(startCardCheckout, null);
 
   if (!hydrated) {
     return <div className="h-64 animate-pulse rounded-[22px] bg-white/70" aria-hidden />;
@@ -40,18 +43,60 @@ export function CheckoutView({ etsyUrl }: { etsyUrl: string }) {
     "Delivery postcode:",
   ].join("\n");
 
+  // Only which babies and how many — every price is worked out again on the server.
+  const basket = JSON.stringify(items.map((i) => ({ product_id: i.productId, quantity: i.qty })));
+
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_360px]">
       <section className={`${card} flex flex-col gap-4 p-[clamp(20px,3vw,32px)]`}>
-        <span className="w-fit rounded-full bg-lilac-soft px-3 py-1 text-xs font-bold text-lilac">Secure checkout launching soon</span>
-        <h2 className="font-serif text-[32px] leading-tight font-medium">Reserve your baby in one message</h2>
-        <p className="leading-relaxed text-muted">
-          We&apos;re putting the finishing touches to our secure online checkout. Until then, send us your basket on
-          WhatsApp and we&apos;ll reserve your baby and send a secure payment link — or buy through our Etsy shop.
-        </p>
+        {cardPayment ? (
+          <>
+            <h2 className="font-serif text-[32px] leading-tight font-medium">Pay securely by card</h2>
+            <p className="leading-relaxed text-muted">
+              Payment is handled by Stripe — your card details never touch our website. You&apos;ll enter your delivery
+              address on the next page, and we&apos;ll email your receipt.
+            </p>
+            <form action={formAction}>
+              <input type="hidden" name="basket" value={basket} />
+              <input type="hidden" name="code" value={discount?.code ?? ""} />
+              <button type="submit" disabled={pending} className={`${buttonPrimary} w-full justify-center sm:w-auto`}>
+                {pending ? "Taking you to payment…" : `Pay ${formatPrice(subtotalPence - saving)} securely`}
+              </button>
+            </form>
+            {state ? (
+              <p role="alert" className="text-sm font-semibold text-rose">
+                {state.message}
+              </p>
+            ) : null}
+            <p className="text-xs leading-relaxed text-muted">
+              Cards, Apple Pay and Google Pay are offered by Stripe where your device supports them. Prices include VAT
+              and free tracked UK delivery.
+            </p>
+
+            <hr className="border-line" />
+            <p className="text-sm text-muted">
+              Prefer to order by message? Send us your basket on WhatsApp and we&apos;ll reserve your baby.
+            </p>
+          </>
+        ) : (
+          <>
+            <span className="w-fit rounded-full bg-lilac-soft px-3 py-1 text-xs font-bold text-lilac">Secure checkout launching soon</span>
+            <h2 className="font-serif text-[32px] leading-tight font-medium">Reserve your baby in one message</h2>
+            <p className="leading-relaxed text-muted">
+              We&apos;re putting the finishing touches to our secure online checkout. Until then, send us your basket on
+              WhatsApp and we&apos;ll reserve your baby and send a secure payment link — or buy through our Etsy shop.
+            </p>
+          </>
+        )}
+
         <div className="flex flex-col gap-3 sm:flex-row">
-          <a href={whatsappUrl(message)} target="_blank" rel="noopener noreferrer" className={`${buttonPrimary} bg-whatsapp text-white hover:bg-[#1eb457]`}>
-            <WhatsAppIcon className="size-5" />
+          <a
+            href={whatsappUrl(message)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cardPayment ? buttonOutline : `${buttonPrimary} bg-whatsapp text-white hover:bg-[#1eb457]`}
+          >
+            <WhatsAppIcon className={`size-5 ${cardPayment ? "text-whatsapp" : ""}`} />
             Send order on WhatsApp
           </a>
           {etsyUrl ? (
