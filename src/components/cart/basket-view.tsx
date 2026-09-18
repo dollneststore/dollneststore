@@ -102,6 +102,7 @@ export function BasketView() {
             <dd className="font-bold text-lilac">{formatPrice(subtotalPence - saving)}</dd>
           </div>
         </dl>
+        <p className="text-xs text-muted">Includes VAT · Free tracked UK delivery</p>
         <DiscountField />
         <Link href="/checkout" className={`${buttonPrimary} mt-2 w-full`}>
           Continue to checkout

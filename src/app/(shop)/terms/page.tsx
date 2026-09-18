@@ -26,8 +26,10 @@ export default function TermsPage() {
 
       <h2>Prices & payment</h2>
       <p>
-        All prices are in pounds sterling (GBP) and include delivery to UK addresses. The price you pay is the price shown
-        when you place your order. Payment is taken when your order is confirmed.
+        All prices are in pounds sterling (GBP) and include VAT at the current UK rate, as well as delivery to UK
+        addresses. The price you pay is the price shown when you place your order — nothing is added at checkout.
+        Payment is taken when your order is confirmed.
+        {site.company.vatNumber ? ` Our VAT number is ${site.company.vatNumber}.` : ""}
       </p>
 
       <h2>Your order</h2>

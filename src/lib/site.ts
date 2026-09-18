@@ -17,6 +17,9 @@ export const site = {
   company: {
     legalName: "HOYD. Trading Ltd",
     number: "15656841",
+    // UK e-commerce rules require a VAT-registered business to publish its number.
+    // Empty prints nothing anywhere, so the site stays correct until we have it.
+    vatNumber: "",
     jurisdiction: "England & Wales",
     address: {
       street: "14 Brick Hill Way",
@@ -60,7 +63,14 @@ export function whatsappUrl(message = "Hi Dollnest! I'd love to ask about one of
   return `https://wa.me/${site.whatsapp.number}?text=${encodeURIComponent(message)}`;
 }
 
-export const companyLine = `${site.company.legalName} · Company No. ${site.company.number} · Registered in ${site.company.jurisdiction}`;
+export const companyLine = [
+  site.company.legalName,
+  `Company No. ${site.company.number}`,
+  site.company.vatNumber ? `VAT No. ${site.company.vatNumber}` : null,
+  `Registered in ${site.company.jurisdiction}`,
+]
+  .filter(Boolean)
+  .join(" · ");
 
 export const addressLine = [
   site.company.address.street,

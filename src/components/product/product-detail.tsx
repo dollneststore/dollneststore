@@ -63,6 +63,13 @@ export async function ProductDetail({ slug }: { slug: string }) {
       url: productUrl,
       priceCurrency: "GBP",
       price: (product.pricePence / 100).toFixed(2),
+      // Shop prices are VAT-inclusive, so search engines shouldn't add tax on top.
+      priceSpecification: {
+        "@type": "PriceSpecification",
+        price: (product.pricePence / 100).toFixed(2),
+        priceCurrency: "GBP",
+        valueAddedTaxIncluded: true,
+      },
       availability: soldOut ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: { "@type": "Organization", name: site.company.legalName },
@@ -145,6 +152,7 @@ export async function ProductDetail({ slug }: { slug: string }) {
             ) : null}
             <span className="rounded-full bg-sage px-3 py-1 text-xs font-bold text-sage-deep">Free UK delivery</span>
           </div>
+          <p className="-mt-3 text-xs text-muted">Price includes VAT — nothing more to pay at checkout.</p>
 
           <AddToBasketButton product={toCartProduct(product)} soldOut={soldOut} size="lg" />
           <a

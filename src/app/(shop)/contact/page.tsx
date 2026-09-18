@@ -84,6 +84,7 @@ export default async function ContactPage() {
           </address>
           <p className="text-muted">
             Company No. {company.number} · Registered in {company.jurisdiction}
+            {company.vatNumber ? ` · VAT No. ${company.vatNumber}` : ""}
           </p>
           <p className="text-xs text-muted">This is our registered office. We don&apos;t offer collections or viewings.</p>
         </section>

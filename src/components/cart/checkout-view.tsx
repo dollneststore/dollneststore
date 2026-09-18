@@ -84,6 +84,7 @@ export function CheckoutView({ etsyUrl }: { etsyUrl: string }) {
           <span className="font-bold">Total</span>
           <span className="font-bold text-lilac">{formatPrice(subtotalPence - saving)}</span>
         </div>
+        <p className="text-xs text-muted">Includes VAT</p>
         <DiscountField />
         <Link href="/basket" className="text-center text-sm font-bold text-lilac hover:underline">
           ← Edit basket
