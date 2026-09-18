@@ -30,7 +30,9 @@ export async function POST(request: Request) {
   const stripe = createStripe();
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!stripe || !secret) {
-    console.error("[stripe webhook] not configured");
+    console.error(
+      `[stripe webhook] not configured — STRIPE_SECRET_KEY:${stripe ? "present" : "missing"} STRIPE_WEBHOOK_SECRET:${secret ? "present" : "missing"}`,
+    );
     return new Response("not configured", { status: 500 });
   }
 
