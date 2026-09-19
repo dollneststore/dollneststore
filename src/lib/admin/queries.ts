@@ -36,6 +36,14 @@ import { SLUG_PATTERN } from "./validation";
 
 const ORDER_LIST_COLUMNS = "id, order_number, status, channel, customer_name, total_pence, created_at";
 
+/**
+ * Card checkout writes a pending order before sending the customer to Stripe, so a browser
+ * that is closed on the payment page leaves a row nobody ever paid for. Those are kept out of
+ * the shop owner's lists (they are still there under the "pending" filter, and the webhook
+ * deletes them when Stripe expires the session).
+ */
+const REAL_ORDERS = "status.neq.pending,channel.neq.website";
+
 type OrderListRow = {
   id: string;
   order_number: string;
@@ -162,6 +170,9 @@ export async function getAdminOrders(filters: { status?: string; q?: string } = 
     );
   }
 
+  // Abandoned checkouts stay out of the default view; a search or the "pending" filter still finds them.
+  if (!status.success && !q) query = query.or(REAL_ORDERS);
+
   const { data, error } = await query.order("created_at", { ascending: false }).limit(200);
   if (error) throw new Error(error.message);
   return (data as OrderListRow[]).map(mapOrderListItem);
@@ -282,17 +293,18 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     unlinkedReviews,
   ] = await Promise.all([
     supabase.from("products").select("id", count).eq("status", "active").gt("stock_qty", 0),
-    supabase.from("orders").select("id", count).in("status", ["pending", "paid", "processing"]),
+    supabase.from("orders").select("id", count).in("status", ["pending", "paid", "processing"]).or(REAL_ORDERS),
     supabase.from("orders").select("total_pence").in("status", ["paid", "processing", "dispatched", "delivered"]).gte("paid_at", since),
     supabase.from("newsletter_subscribers").select("id", count).is("unsubscribed_at", null),
-    supabase.from("orders").select(ORDER_LIST_COLUMNS).order("created_at", { ascending: false }).limit(6),
+    supabase.from("orders").select(ORDER_LIST_COLUMNS).or(REAL_ORDERS).order("created_at", { ascending: false }).limit(6),
     supabase
       .from("orders")
       .select(ORDER_LIST_COLUMNS, { count: "exact" })
       .in("status", ["paid", "processing"])
       .order("created_at", { ascending: true })
       .limit(5),
-    supabase.from("orders").select("id", count).eq("status", "pending"),
+    // Only orders a person is genuinely waiting to be paid for — not a closed browser tab.
+    supabase.from("orders").select("id", count).eq("status", "pending").neq("channel", "website"),
     supabase.from("products").select("id", count).eq("status", "active").eq("stock_qty", 0),
     supabase.from("products").select("id", count).eq("status", "draft"),
     supabase.from("posts").select("id", count).eq("status", "draft"),

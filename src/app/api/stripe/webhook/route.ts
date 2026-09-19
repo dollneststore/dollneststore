@@ -48,6 +48,24 @@ export async function POST(request: Request) {
     return new Response("bad signature", { status: 400 });
   }
 
+  // A checkout that was never paid for: Stripe has closed it, so the placeholder order
+  // can go. Nothing was reserved — stock only moves when an order is paid.
+  if (event.type === "checkout.session.expired") {
+    const abandonedId = event.data.object.metadata?.order_id;
+    const service = createServiceClient();
+    if (abandonedId && service) {
+      const { error } = await service
+        .from("orders")
+        .delete()
+        .eq("id", abandonedId)
+        .eq("status", "pending")
+        .eq("channel", "website")
+        .is("paid_at", null);
+      if (error) console.error("[stripe webhook] discard expired order", error.message);
+    }
+    return new Response("ok", { status: 200 });
+  }
+
   if (event.type !== "checkout.session.completed" && event.type !== "checkout.session.async_payment_succeeded") {
     return new Response("ignored", { status: 200 });
   }
